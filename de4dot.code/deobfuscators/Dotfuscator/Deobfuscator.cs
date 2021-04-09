@@ -162,7 +162,7 @@ namespace de4dot.code.deobfuscators.Dotfuscator {
 			var cflowDescrypter = new CflowDecrypter(module);
 			cflowDescrypter.CflowClean();
 		}
-		
+		 
 		void DoStringBuilderClean() {
 			var decrypter = new StringBuilderDecrypter(module);
 			decrypter.StringBuilderClean();

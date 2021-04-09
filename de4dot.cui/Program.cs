@@ -34,7 +34,7 @@ namespace de4dot.cui {
 
 	class Program {
 		static IList<IDeobfuscatorInfo> deobfuscatorInfos = CreateDeobfuscatorInfos();
-
+		
 		static IList<IDeobfuscatorInfo> LoadPlugin(string assembly) {
 			var plugins = new List<IDeobfuscatorInfo>();
 			try {

@@ -3,7 +3,6 @@
   <Import Project="..\De4DotCommon.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\dnlib\dnlib.csproj" />
     <ProjectReference Include="..\de4dot.blocks\de4dot.blocks.csproj" />
     <ProjectReference Include="..\de4dot.code\de4dot.code.csproj" />
   </ItemGroup>
