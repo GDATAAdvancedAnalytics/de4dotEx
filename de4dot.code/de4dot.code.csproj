@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\dnlib\src\dnlib.csproj" />
+    <ProjectReference Include="..\dnlib\dnlib.csproj" />
     <ProjectReference Include="..\AssemblyData\AssemblyData.csproj" />
     <ProjectReference Include="..\de4dot.blocks\de4dot.blocks.csproj" />
     <ProjectReference Include="..\de4dot.mdecrypt\de4dot.mdecrypt.csproj" />
