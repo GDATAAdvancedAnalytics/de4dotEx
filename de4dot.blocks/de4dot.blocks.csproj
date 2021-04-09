@@ -6,4 +6,8 @@
     <PackageReference Include="dnlib" Version="$(DnlibVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\dnlib\dnlib.csproj" />
+  </ItemGroup>
+
 </Project>
