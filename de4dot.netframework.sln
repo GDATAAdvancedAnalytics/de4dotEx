@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 15.0.26206.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "de4dot.code", "de4dot.code\de4dot.code.csproj", "{4D10B9EB-3BF1-4D61-A389-CB019E8C9622}"
 EndProject
@@ -32,6 +32,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AssemblyServer-CLR40", "AssemblyServer-CLR40\AssemblyServer-CLR40.csproj", "{B8FF4ADD-BAD8-47FD-B126-63234E2BB0B3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AssemblyServer-CLR40-x64", "AssemblyServer-CLR40-x64\AssemblyServer-CLR40-x64.csproj", "{A0F58B9F-BB56-4D9B-B04A-726F9E7961EB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dnlib", "..\dnlib\src\dnlib.csproj", "{C570B02C-164F-470A-A332-2699863D9BB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -257,6 +259,22 @@ Global
 		{A0F58B9F-BB56-4D9B-B04A-726F9E7961EB}.Release|Win32.Build.0 = Release|Any CPU
 		{A0F58B9F-BB56-4D9B-B04A-726F9E7961EB}.Release|x86.ActiveCfg = Release|Any CPU
 		{A0F58B9F-BB56-4D9B-B04A-726F9E7961EB}.Release|x86.Build.0 = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|Win32.Build.0 = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Debug|x86.Build.0 = Debug|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Win32.ActiveCfg = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|Win32.Build.0 = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|x86.ActiveCfg = Release|Any CPU
+		{C570B02C-164F-470A-A332-2699863D9BB3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
