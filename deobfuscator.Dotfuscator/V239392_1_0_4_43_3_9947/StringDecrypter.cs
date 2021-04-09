@@ -81,14 +81,70 @@ namespace de4dot.code.deobfuscators.DotfuscatorAll.V239392_1_0_4_43_3_9947 {
 					if (opAdd1.OpCode != OpCodes.Add)
 						continue;
 
+					/*
+					 * internal static string d(string A_0, int A_1)
+						{
+							char[] array = A_0.ToCharArray();
+							int num = (int)((IntPtr)(1180514709 + A_1) + (IntPtr)78 + (IntPtr)13 + (IntPtr)33 + (IntPtr)18);
+							int num3;
+							int num2;
+							if ((num2 = (num3 = 0)) < 1)
+							{
+								goto IL_63;
+							}
+							IL_30:
+							int num5;
+							int num4 = num5 = num2;
+							char[] array2 = array;
+							int num6 = num5;
+							char c = array[num5];
+							byte b = (byte)((int)(c & 'ÿ') ^ num++);
+							byte b2 = (byte)((int)(c >> 8) ^ num++);
+							byte b3 = b2;
+							b2 = b;
+							b = b3;
+							array2[num6] = (ushort)((int)b2 << 8 | (int)b);
+							num3 = num4 + 1;
+							IL_63:
+							if ((num2 = num3) >= array.Length)
+							{
+								return string.Intern(new string(array));
+							}
+							goto IL_30;
+						}
+					 */
+					/*
+					 * 0	0000	ldarg.0
+						1	0001	callvirt	instance char[] [mscorlib]System.String::ToCharArray()
+						2	0006	stloc.0
+						3	0007	ldc.i4	0x465D3995
+						4	000C	ldarg.1
+						5	000D	add
+						6	000E	ldc.i4	0x4E
+						7	0013	conv.i
+						8	0014	add
+						9	0015	ldc.i4	13
+						10	001A	conv.i
+						11	001B	add
+						12	001C	ldc.i4	0x21
+						13	0021	conv.i
+						14	0022	add
+						15	0023	ldc.i4	18
+						16	0028	conv.i
+						17	0029	add
+						18	002A	stloc.1
+						19	002B	ldc.i4.0
+
+					 */
 					int magicAdd = 0;
 					int j = i + 6;
 					while (j < instrs.Count - 1 && !instrs[j].IsStloc()) {
 						var ldcOp = instrs[j];
-						var addOp = instrs[j + 1];
-						if (ldcOp.IsLdcI4() && addOp.OpCode == OpCodes.Add) {
+						var convOp = instrs[j + 1];
+						var addOp = instrs[j + 2];
+						if (ldcOp.IsLdcI4() && convOp.OpCode == OpCodes.Conv_I && addOp.OpCode == OpCodes.Add) {
 							magicAdd = magicAdd + ldcOp.GetLdcI4Value();
-							j = j + 2;
+							j = j + 3;
 						}
 						else
 							j++;
@@ -103,12 +159,21 @@ namespace de4dot.code.deobfuscators.DotfuscatorAll.V239392_1_0_4_43_3_9947 {
 		}
 
 		public string Decrypt(IMethod method, string encrypted, int value) {
+			/*
+			 * char c = array[num5];
+				byte b = (byte)((int)(c & 'ÿ') ^ num++);
+				byte b2 = (byte)((int)(c >> 8) ^ num++);
+				byte b3 = b2;
+				b2 = b;
+				b = b3;
+				array2[num6] = (ushort)((int)b2 << 8 | (int)b);
+			 */
 			var info = stringDecrypterMethods.FindAny(method);
 			char[] chars = encrypted.ToCharArray();
 			byte key = (byte)(info.magic + value);
 			for (int i = 0; i < chars.Length; i++) {
 				char c = chars[i];
-				byte b1 = (byte)((byte)c ^ key++);
+				byte b1 = (byte)((byte)(c & 'ÿ') ^ key++);
 				byte b2 = (byte)((byte)(c >> 8) ^ key++);
 				chars[i] = (char)((b1 << 8) | b2);
 			}

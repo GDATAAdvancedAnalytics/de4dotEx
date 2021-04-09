@@ -93,7 +93,7 @@ namespace de4dot.cui {
 			var dict = new Dictionary<string, IDeobfuscatorInfo>();
 			foreach (var d in local)
 				dict[d.Type] = d;
-			string pluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin");
+			string pluginDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "plugin");
 			GetPlugins(pluginDir, ref dict);
 			return new List<IDeobfuscatorInfo>(dict.Values);
 		}
