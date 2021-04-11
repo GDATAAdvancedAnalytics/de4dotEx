@@ -291,9 +291,9 @@ namespace de4dot.code.deobfuscators.DotfuscatorAll.V239392_1_0_4_43_3_9947 {
 						var switchTargets = (Instruction[])sw.Operand;
 						br.Operand = switchTargets[value];
 						nopIdxs.Add(instructions.IndexOf(ldc4));
-						nopIdxs.Add(instructions.IndexOf(convi));
 						nopIdxs.Add(instructions.IndexOf(stloc));
 					}
+					nopIdxs.Add(instructions.IndexOf(convi));
 				}
 			}
 		}
