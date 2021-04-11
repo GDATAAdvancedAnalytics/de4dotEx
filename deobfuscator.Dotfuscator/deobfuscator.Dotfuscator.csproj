@@ -1,9 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\De4DotCommon.props" />
 
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net35|AnyCPU'">
+    <OutputPath>F:\Source\de4dot\\Debug</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
