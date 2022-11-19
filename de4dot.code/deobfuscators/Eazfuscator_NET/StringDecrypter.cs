@@ -598,9 +598,11 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 		}
 
 		bool FindShiftInts(MethodDef method, out List<int> bytes) {
+			bytes = new List<int>(8);
+			if (method == null) return false;
+
 			var instrs = method.Body.Instructions;
 			var constantsReader = new EfConstantsReader(method);
-			bytes = new List<int>(8);
 
 			for (int i = 0; i < instrs.Count - 4; i++) {
 				if (bytes.Count >= 8)
