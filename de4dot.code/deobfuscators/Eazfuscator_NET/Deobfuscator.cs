@@ -29,8 +29,11 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 		public const string THE_NAME = "Eazfuscator.NET";
 		public const string THE_TYPE = "ef";
 		const string DEFAULT_REGEX = @"!^[a-zA-Z]$&!^#=&!^dje_.+_ejd$&" + DeobfuscatorBase.DEFAULT_ASIAN_VALID_NAME_REGEX;
+		StringOption nameToken;
+
 		public DeobfuscatorInfo()
 			: base(DEFAULT_REGEX) {
+			nameToken = new StringOption(null, MakeArgName("token"), "Demangle Token", null);
 		}
 
 		public override string Name => THE_NAME;
@@ -39,7 +42,13 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 		public override IDeobfuscator CreateDeobfuscator() =>
 			new Deobfuscator(new Deobfuscator.Options {
 				ValidNameRegex = validNameRegex.Get(),
+				Token = nameToken.Get(),
 			});
+
+		protected override IEnumerable<Option> GetOptionsInternal() =>
+			new List<Option>() {
+				nameToken,
+			};
 	}
 
 	class Deobfuscator : DeobfuscatorBase {
@@ -53,6 +62,7 @@ namespace de4dot.code.deobfuscators.Eazfuscator_NET {
 		ResourceMethodsRestorer resourceMethodsRestorer;
 
 		internal class Options : OptionsBase {
+			public string Token { get; set; }
 		}
 
 		public override string Type => DeobfuscatorInfo.THE_TYPE;

@@ -24,6 +24,7 @@ using dnlib.DotNet;
 using de4dot.code.renamer.asmmodules;
 using dnlib.DotNet.Resources;
 using de4dot.blocks;
+using Gapotchenko.Eazfuscator.NET.SDK;
 
 namespace de4dot.code.renamer {
 	[Flags]
@@ -44,8 +45,11 @@ namespace de4dot.code.renamer {
 		DontRenameDelegateFields = 0x2000,
 	}
 
-	public class Renamer {
+	public class Renamer : IDisposable {
 		public RenamerFlags RenamerFlags { get; set; }
+
+		private ISymbolDecoder Decoder;
+
 		public bool RenameNamespaces {
 			get => (RenamerFlags & RenamerFlags.RenameNamespaces) != 0;
 			set {
@@ -184,7 +188,8 @@ namespace de4dot.code.renamer {
 			"System.MulticastDelegate",
 		};
 
-		public Renamer(IDeobfuscatorContext deobfuscatorContext, IEnumerable<IObfuscatedFile> files, RenamerFlags flags) {
+		public Renamer(IDeobfuscatorContext deobfuscatorContext, IEnumerable<IObfuscatedFile> files, RenamerFlags flags, string eazToken) {
+			if (eazToken != null) Decoder = SymbolDecoder.Create(eazToken);
 			RenamerFlags = flags;
 
 			WarnIfXaml(files);
@@ -349,7 +354,9 @@ namespace de4dot.code.renamer {
 			RenameGenericParams2(type.GenericParams);
 
 			if (RenameTypes && info.GotNewName()) {
+				if (Decoder != null) info.newName = Decoder.Decode(info.oldName);
 				var old = typeDef.Name;
+
 				typeDef.Name = info.newName;
 				if (isVerbose)
 					Logger.v("Name: {0} => {1}", Utils.RemoveNewlines(old), Utils.RemoveNewlines(typeDef.Name));
@@ -372,6 +379,8 @@ namespace de4dot.code.renamer {
 				var info = memberInfos.GenericParam(param);
 				if (!info.GotNewName())
 					continue;
+
+				if (Decoder != null) info.newName = Decoder.Decode(info.oldName);
 				param.GenericParam.Name = info.newName;
 				if (isVerbose)
 					Logger.v("GenParam: {0} => {1}", Utils.RemoveNewlines(info.oldFullName), Utils.RemoveNewlines(param.GenericParam.FullName));
@@ -416,6 +425,8 @@ namespace de4dot.code.renamer {
 					continue;
 				if (isDelegateType && DontRenameDelegateFields)
 					continue;
+
+				if (Decoder != null) fieldInfo.newName = Decoder.Decode(fieldInfo.oldName);
 				fieldDef.FieldDef.Name = fieldInfo.newName;
 				if (isVerbose)
 					Logger.v("Field: {0} ({1:X8}) => {2}",
@@ -432,6 +443,8 @@ namespace de4dot.code.renamer {
 				var propInfo = memberInfos.Property(propDef);
 				if (!propInfo.GotNewName())
 					continue;
+
+				if (Decoder != null) propInfo.newName = Decoder.Decode(propInfo.oldName);
 				propDef.PropertyDef.Name = propInfo.newName;
 				if (isVerbose)
 					Logger.v("Property: {0} ({1:X8}) => {2}",
@@ -448,6 +461,8 @@ namespace de4dot.code.renamer {
 				var eventInfo = memberInfos.Event(eventDef);
 				if (!eventInfo.GotNewName())
 					continue;
+
+				if (Decoder != null) eventInfo.newName = Decoder.Decode(eventInfo.oldName);
 				eventDef.EventDef.Name = eventInfo.newName;
 				if (isVerbose)
 					Logger.v("Event: {0} ({1:X8}) => {2}",
@@ -469,6 +484,8 @@ namespace de4dot.code.renamer {
 				RenameGenericParams2(methodDef.GenericParams);
 
 				if (RenameMethods && methodInfo.GotNewName()) {
+
+					if (Decoder != null) methodInfo.newName = Decoder.Decode(methodInfo.oldName);
 					methodDef.MethodDef.Name = methodInfo.newName;
 					if (isVerbose)
 						Logger.v("Name: {0} => {1}", Utils.RemoveNewlines(methodInfo.oldFullName), Utils.RemoveNewlines(methodDef.MethodDef.FullName));
@@ -484,6 +501,8 @@ namespace de4dot.code.renamer {
 								continue;
 							param.ParameterDef.CreateParamDef();
 						}
+
+						if (Decoder != null) paramInfo.newName = Decoder.Decode(paramInfo.oldName);
 						param.ParameterDef.Name = paramInfo.newName;
 						if (isVerbose) {
 							if (param.IsReturnParameter)
@@ -1785,6 +1804,11 @@ namespace de4dot.code.renamer {
 						memberInfos.Param(paramDef).newName = "args";
 				}
 			}
+		}
+
+		public void Dispose()
+		{
+			this.Decoder?.Dispose();
 		}
 	}
 }

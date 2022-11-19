@@ -19,6 +19,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using dnlib.DotNet;
 using dnlib.DotNet.Writer;
@@ -264,7 +265,7 @@ namespace de4dot.cui {
 						var obfuscatedFile = CreateObfuscatedFile(searchDir, filename);
 						if (obfuscatedFile != null)
 							yield return obfuscatedFile;
-					}					
+					}
 				}
 			}
 
@@ -386,7 +387,12 @@ namespace de4dot.cui {
 		void Rename(IEnumerable<IObfuscatedFile> theFiles) {
 			if (!options.RenameSymbols)
 				return;
-			var renamer = new Renamer(deobfuscatorContext, theFiles, options.RenamerFlags);
+
+			// Very ugly
+			var eazTokenOpt = (StringOption)options.DeobfuscatorInfos.First(info => info.Type == "ef")?.GetOptions()?.First(o => o.LongName == "--ef-token");
+			var eazToken = eazTokenOpt?.Get();
+
+			var renamer = new Renamer(deobfuscatorContext, theFiles, options.RenamerFlags, eazToken);
 			renamer.Rename();
 		}
 	}
