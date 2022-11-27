@@ -3,7 +3,7 @@
   <Import Project="..\De4DotCommon.props" />
 
   <ItemGroup>
-    <PackageReference Include="dnlib" Version="$(DnlibVersion)" />
+    <PackageReference Include="dnlib" Version="3.6.0" />
   </ItemGroup>
 
   <ItemGroup>

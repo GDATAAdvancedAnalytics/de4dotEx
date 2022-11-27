@@ -5,7 +5,7 @@ using System.Text;
 using dnlib.DotNet;
 using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.DotfuscatorAll {
+namespace de4dot.plugin.deobfuscators.Dotfuscator {
 	public interface IStringDecrypter  {
 		bool Detected { get; }
 		void Find(ISimpleDeobfuscator simpleDeobfuscator);

@@ -21,8 +21,9 @@ using System;
 using System.Collections.Generic;
 using dnlib.DotNet;
 using de4dot.blocks;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.DotfuscatorAll {
+namespace de4dot.plugin.deobfuscators.Dotfuscator {
 	public class StringDecrypterInfo {
 		public MethodDef method;
 		public int magic;

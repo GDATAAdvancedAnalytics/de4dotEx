@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
-namespace de4dot.code.deobfuscators.DotfuscatorAll.Default {
+namespace de4dot.plugin.deobfuscators.Dotfuscator.Default {
 	class CflowDecrypter : ICflowDecrypter {
 		ModuleDefMD module;
 

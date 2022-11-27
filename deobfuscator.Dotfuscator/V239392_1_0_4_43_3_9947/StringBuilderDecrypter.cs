@@ -24,7 +24,7 @@ using System.Text;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
-namespace de4dot.code.deobfuscators.DotfuscatorAll.V239392_1_0_4_43_3_9947 {
+namespace de4dot.plugin.deobfuscators.Dotfuscator.V239392_1_0_4_43_3_9947 {
 
 	/// <summary>
 	///     remove stringbuilder crypter
