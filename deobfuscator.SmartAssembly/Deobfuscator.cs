@@ -68,20 +68,6 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 		string obfuscatorName = DeobfuscatorInfo.THE_NAME;
 		bool foundSmartAssemblyAttribute = false;
 
-		IList<StringDecrypterInfo> stringDecrypterInfos = new List<StringDecrypterInfo>();
-		IList<StringDecrypter> stringDecrypters = new List<StringDecrypter>();
-		ResourceDecrypterInfo resourceDecrypterInfo;
-		ResourceDecrypter resourceDecrypter;
-		AssemblyResolverInfo assemblyResolverInfo;
-		AssemblyResolver assemblyResolver;
-		ResourceResolverInfo resourceResolverInfo;
-		ResourceResolver resourceResolver;
-		MemoryManagerInfo memoryManagerInfo;
-
-		ProxyCallFixer proxyCallFixer;
-		AutomatedErrorReportingFinder automatedErrorReportingFinder;
-		TamperProtectionRemover tamperProtectionRemover;
-
 		internal class Options : OptionsBase {
 			public bool RemoveAutomatedErrorReporting { get; set; }
 			public bool RemoveTamperProtection { get; set; }
@@ -99,6 +85,8 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 			}
 		}
 
+		IDeobfuscatorVer deobfuscatorVer;
+
 		public Deobfuscator(Options options)
 			: base(options) {
 			this.options = options;
@@ -110,21 +98,50 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 		protected override int DetectInternal() {
 			int val = 0;
 
-			if (memoryManagerInfo.Detected)
-				val += 100;
+			val += deobfuscatorVer.DetectInternal();
 			if (foundSmartAssemblyAttribute)
 				val += 10;
 
 			return val;
 		}
 
+		private int SelectVer() {
+			Console.WriteLine("find version:" + obfuscatorName);
+			if (obfuscatorName.Contains("8.1.2.4975")) {
+				return 1;
+			}
+
+			Console.WriteLine("no smart assembly for this version, please select version:");
+			Console.WriteLine("0: default");
+			Console.WriteLine("1: 8.1.2.4975");
+
+			string strVer = Console.ReadLine();
+			int nVer = 0;
+			if (int.TryParse(strVer, out nVer)) {
+				nVer = 0;
+			}
+			return nVer;
+		}
+
+		private IDeobfuscatorVer GetDeobfuscator() {
+			IDeobfuscatorVer deobfuscator = null;
+			int ver = SelectVer();
+			switch (ver) {
+			case 1:
+				deobfuscator = new V8_1_2_4975.DeobfuscatorVer(this);
+				break;
+			case 0:
+			default:
+				deobfuscator = new Default.DeobfuscatorVer(this);
+				break;
+			}
+			return deobfuscator;
+		}
+
 		protected override void ScanForObfuscator() {
 			FindSmartAssemblyAttributes();
-			memoryManagerInfo = new MemoryManagerInfo(module);
-			memoryManagerInfo.Find();
-			proxyCallFixer = new ProxyCallFixer(module, DeobfuscatedFile);
-			proxyCallFixer.FindDelegateCreator(module);
-
+			deobfuscatorVer = GetDeobfuscator();
+			deobfuscatorVer.ScanForObfuscator();
 			if (!foundVersion)
 				GuessVersion();
 		}
@@ -167,7 +184,7 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 			if (poweredByAttributeString == "Powered by {smartassembly}") {
 				// It's SA 1.x - 4.x
 
-				if (proxyCallFixer.Detected || HasEmptyClassesInEveryNamespace()) {
+				if (deobfuscatorVer.IsProxyCallFixerDetected() || HasEmptyClassesInEveryNamespace()) {
 					ObfuscatorName = "SmartAssembly 4.x";
 					approxVersion = new Version(4, 0, 0, 0);
 					return;
@@ -270,160 +287,17 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 
 		public override void DeobfuscateBegin() {
 			base.DeobfuscateBegin();
-
-			tamperProtectionRemover = new TamperProtectionRemover(module);
-			automatedErrorReportingFinder = new AutomatedErrorReportingFinder(module);
-			automatedErrorReportingFinder.Find();
-
-			if (options.RemoveMemoryManager) {
-				AddModuleCctorInitCallToBeRemoved(memoryManagerInfo.CctorInitMethod);
-				AddCallToBeRemoved(module.EntryPoint, memoryManagerInfo.CctorInitMethod);
-			}
-
-			InitDecrypters();
-			proxyCallFixer.Find();
+			deobfuscatorVer.DeobfuscateBegin();
 		}
-
-		void InitDecrypters() {
-			assemblyResolverInfo = new AssemblyResolverInfo(module, DeobfuscatedFile, this);
-			assemblyResolverInfo.FindTypes();
-			resourceDecrypterInfo = new ResourceDecrypterInfo(module, assemblyResolverInfo.SimpleZipTypeMethod, DeobfuscatedFile);
-			resourceResolverInfo = new ResourceResolverInfo(module, DeobfuscatedFile, this, assemblyResolverInfo);
-			resourceResolverInfo.FindTypes();
-			resourceDecrypter = new ResourceDecrypter(resourceDecrypterInfo);
-			assemblyResolver = new AssemblyResolver(resourceDecrypter, assemblyResolverInfo);
-			resourceResolver = new ResourceResolver(module, assemblyResolver, resourceResolverInfo);
-
-			InitStringDecrypterInfos();
-			assemblyResolverInfo.FindTypes();
-			resourceResolverInfo.FindTypes();
-
-			AddModuleCctorInitCallToBeRemoved(assemblyResolverInfo.CallResolverMethod);
-			AddCallToBeRemoved(module.EntryPoint, assemblyResolverInfo.CallResolverMethod);
-			AddModuleCctorInitCallToBeRemoved(resourceResolverInfo.CallResolverMethod);
-			AddCallToBeRemoved(module.EntryPoint, resourceResolverInfo.CallResolverMethod);
-
-			resourceDecrypterInfo.SetSimpleZipType(GetGlobalSimpleZipTypeMethod(), DeobfuscatedFile);
-
-			if (!DecryptResources())
-				throw new ApplicationException("Could not decrypt resources");
-
-			DumpEmbeddedAssemblies();
-		}
-
-		void DumpEmbeddedAssemblies() {
-			assemblyResolver.ResolveResources();
-			foreach (var tuple in assemblyResolver.GetDecryptedResources()) {
-				DeobfuscatedFile.CreateAssemblyFile(tuple.Item2, tuple.Item1.simpleName, null);
-				AddResourceToBeRemoved(tuple.Item1.resource, $"Embedded assembly: {tuple.Item1.assemblyName}");
-			}
-		}
-
-		bool DecryptResources() {
-			if (!resourceResolver.CanDecryptResource())
-				return false;
-			var info = resourceResolver.MergeResources();
-			if (info == null)
-				return true;
-			AddResourceToBeRemoved(info.resource, "Encrypted resources");
-			assemblyResolver.ResolveResources();
-			return true;
-		}
-
-		MethodDef GetGlobalSimpleZipTypeMethod() {
-			if (assemblyResolverInfo.SimpleZipTypeMethod != null)
-				return assemblyResolverInfo.SimpleZipTypeMethod;
-			foreach (var info in stringDecrypterInfos) {
-				if (info.SimpleZipTypeMethod != null)
-					return info.SimpleZipTypeMethod;
-			}
-			return null;
-		}
-
-		void InitStringDecrypterInfos() {
-			var stringEncoderClassFinder = new StringEncoderClassFinder(module, DeobfuscatedFile);
-			stringEncoderClassFinder.Find();
-			foreach (var info in stringEncoderClassFinder.StringsEncoderInfos) {
-				var sinfo = new StringDecrypterInfo(module, info.StringDecrypterClass) {
-					GetStringDelegate = info.GetStringDelegate,
-					StringsType = info.StringsType,
-					CreateStringDelegateMethod = info.CreateStringDelegateMethod,
-				};
-				stringDecrypterInfos.Add(sinfo);
-			}
-
-			// There may be more than one string decrypter. The strings in the first one's
-			// methods may be decrypted by the other string decrypter.
-
-			var initd = new Dictionary<StringDecrypterInfo, bool>(stringDecrypterInfos.Count);
-			while (initd.Count != stringDecrypterInfos.Count) {
-				StringDecrypterInfo initdInfo = null;
-				for (int i = 0; i < 2; i++) {
-					foreach (var info in stringDecrypterInfos) {
-						if (initd.ContainsKey(info))
-							continue;
-						if (info.Initialize(this, DeobfuscatedFile)) {
-							resourceDecrypterInfo.SetSimpleZipType(info.SimpleZipTypeMethod, DeobfuscatedFile);
-							initdInfo = info;
-							break;
-						}
-					}
-					if (initdInfo != null)
-						break;
-
-					assemblyResolverInfo.FindTypes();
-					resourceResolverInfo.FindTypes();
-					DecryptResources();
-				}
-
-				if (initdInfo == null)
-					break;
-
-				initd[initdInfo] = true;
-				InitStringDecrypter(initdInfo);
-			}
-
-			// Sometimes there could be a string decrypter present that isn't called by anyone.
-			foreach (var info in stringDecrypterInfos) {
-				if (initd.ContainsKey(info))
-					continue;
-				Logger.v("String decrypter not initialized. Token {0:X8}", info.StringsEncodingClass.MDToken.ToInt32());
-			}
-		}
-
-		void InitStringDecrypter(StringDecrypterInfo info) {
-			Logger.v("Adding string decrypter. Resource: {0}", Utils.ToCsharpString(info.StringsResource.Name));
-			var decrypter = new StringDecrypter(info);
-			if (decrypter.CanDecrypt) {
-				var invokeMethod = info.GetStringDelegate?.FindMethod("Invoke");
-				staticStringInliner.Add(invokeMethod, (method, gim, args) => {
-					var fieldDef = DotNetUtils.GetField(module, (IField)args[0]);
-					return decrypter.Decrypt(fieldDef.MDToken.ToInt32(), (int)args[1]);
-				});
-				staticStringInliner.Add(info.StringDecrypterMethod, (method, gim, args) => {
-					return decrypter.Decrypt(0, (int)args[0]);
-				});
-			}
-			stringDecrypters.Add(decrypter);
-			DeobfuscatedFile.StringDecryptersAdded();
-		}
-
+		
 		public override void DeobfuscateMethodEnd(Blocks blocks) {
-			proxyCallFixer.Deobfuscate(blocks);
-			RemoveAutomatedErrorReportingCode(blocks);
-			RemoveTamperProtection(blocks);
-			RemoveStringsInitCode(blocks);
+			deobfuscatorVer.DeobfuscateMethodEnd(blocks);
 			base.DeobfuscateMethodEnd(blocks);
 		}
 
 		public override void DeobfuscateEnd() {
 			canRemoveTypes = FindBigType() == null;
-			RemoveProxyDelegates(proxyCallFixer, canRemoveTypes);
-			RemoveMemoryManagerStuff();
-			RemoveTamperProtectionStuff();
-			RemoveStringDecryptionStuff();
-			RemoveResolverInfoTypes(assemblyResolverInfo, "Assembly");
-			RemoveResolverInfoTypes(resourceResolverInfo, "Resource");
+			deobfuscatorVer.DeobfuscateEnd();
 			base.DeobfuscateEnd();
 		}
 
@@ -454,74 +328,58 @@ namespace de4dot.plugin.deobfuscators.SmartAssembly {
 			}
 			return true;
 		}
-
-		void RemoveResolverInfoTypes(ResolverInfoBase info, string typeName) {
-			if (!canRemoveTypes)
-				return;
-			if (info.CallResolverType == null || info.Type == null)
-				return;
-			AddTypeToBeRemoved(info.CallResolverType, $"{typeName} resolver type #1");
-			AddTypeToBeRemoved(info.Type, $"{typeName} resolver type #2");
-		}
-
-		void RemoveAutomatedErrorReportingCode(Blocks blocks) {
-			if (!options.RemoveAutomatedErrorReporting)
-				return;
-			if (automatedErrorReportingFinder.Remove(blocks))
-				Logger.v("Removed Automated Error Reporting code");
-		}
-
-		void RemoveTamperProtection(Blocks blocks) {
-			if (!options.RemoveTamperProtection)
-				return;
-			if (tamperProtectionRemover.Remove(blocks))
-				Logger.v("Removed Tamper Protection code");
-		}
-
-		void RemoveMemoryManagerStuff() {
-			if (!canRemoveTypes || !options.RemoveMemoryManager)
-				return;
-			AddTypeToBeRemoved(memoryManagerInfo.Type, "Memory manager type");
-		}
-
-		void RemoveTamperProtectionStuff() {
-			if (!options.RemoveTamperProtection)
-				return;
-			AddMethodsToBeRemoved(tamperProtectionRemover.PinvokeMethods, "Tamper protection PInvoke method");
-		}
-
-		void RemoveStringDecryptionStuff() {
-			if (!CanRemoveStringDecrypterType)
-				return;
-
-			foreach (var decrypter in stringDecrypters) {
-				var info = decrypter.StringDecrypterInfo;
-				AddResourceToBeRemoved(info.StringsResource, "Encrypted strings");
-				AddFieldsToBeRemoved(info.GetAllStringDelegateFields(), "String decrypter delegate field");
-
-				if (canRemoveTypes) {
-					AddTypeToBeRemoved(info.StringsEncodingClass, "String decrypter type");
-					AddTypeToBeRemoved(info.StringsType, "Creates the string decrypter delegates");
-					AddTypeToBeRemoved(info.GetStringDelegate, "String decrypter delegate type");
-				}
-			}
-		}
-
-		void RemoveStringsInitCode(Blocks blocks) {
-			if (!CanRemoveStringDecrypterType)
-				return;
-
-			if (blocks.Method.Name == ".cctor") {
-				foreach (var decrypter in stringDecrypters)
-					decrypter.StringDecrypterInfo.RemoveInitCode(blocks);
-			}
-		}
-
 		public override IEnumerable<int> GetStringDecrypterMethods() {
 			var list = new List<int>();
 			foreach (var method in staticStringInliner.Methods)
 				list.Add(method.MDToken.ToInt32());
 			return list;
+		}
+
+		public ModuleDefMD GetModule() {
+			return module;
+		}
+		public IDeobfuscatedFile GetDeobfuscatedFile() {
+			return DeobfuscatedFile;
+		}
+		public StaticStringInliner GetStaticStringInliner() {
+			return staticStringInliner;
+		}
+
+		public Options GetOptions() { return options; }
+
+		public void _AddModuleCctorInitCallToBeRemoved(MethodDef methodToBeRemoved) {
+			AddModuleCctorInitCallToBeRemoved(methodToBeRemoved);
+		}
+		public void _AddCallToBeRemoved(MethodDef method, MethodDef methodToBeRemoved) {
+			AddCallToBeRemoved(method, methodToBeRemoved);
+		}
+
+		public void _AddResourceToBeRemoved(Resource resource, string reason) {
+			AddResourceToBeRemoved(resource, reason);
+		}
+
+		public void _AddTypeToBeRemoved(TypeDef type, string reason) {
+			AddTypeToBeRemoved(type, reason);
+		}
+
+		public void _AddMethodsToBeRemoved(IEnumerable<MethodDef> methods, string reason) {
+			AddMethodsToBeRemoved(methods, reason);
+		}
+
+		public void _AddFieldsToBeRemoved(IEnumerable<FieldDef> fields, string reason) {
+			AddFieldsToBeRemoved(fields, reason);
+		}
+
+		public bool GetCanRemoveTypes() {
+			return canRemoveTypes;
+		}
+
+		public bool GetCanRemoveStringDecrypterType() {
+			return CanRemoveStringDecrypterType;
+		}
+
+		public bool _RemoveProxyDelegates(ProxyCallFixerBase proxyCallFixer, bool removeCreators) {
+			return RemoveProxyDelegates(proxyCallFixer, removeCreators);
 		}
 	}
 }

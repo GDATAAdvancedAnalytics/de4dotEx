@@ -45,7 +45,7 @@
     <Compile Include="Default\AssemblyResolver.cs" />
     <Compile Include="Default\AssemblyResolverInfo.cs" />
     <Compile Include="Default\AutomatedErrorReportingFinder.cs" />
-    <Compile Include="Default\Deobfuscator.cs" />
+    <Compile Include="Default\DeobfuscatorVer.cs" />
     <Compile Include="Deobfuscator.cs" />
     <Compile Include="Default\MemoryManagerInfo.cs" />
     <Compile Include="Default\ProxyCallFixer.cs" />
@@ -59,7 +59,24 @@
     <Compile Include="Default\StringDecrypterInfo.cs" />
     <Compile Include="Default\StringEncoderClassFinder.cs" />
     <Compile Include="Default\TamperProtectionRemover.cs" />
+    <Compile Include="IDeobfuscatorVer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="V8_1_2_4975\AssemblyResolver.cs" />
+    <Compile Include="V8_1_2_4975\AssemblyResolverInfo.cs" />
+    <Compile Include="V8_1_2_4975\AutomatedErrorReportingFinder.cs" />
+    <Compile Include="V8_1_2_4975\DeobfuscatorVer.cs" />
+    <Compile Include="V8_1_2_4975\MemoryManagerInfo.cs" />
+    <Compile Include="V8_1_2_4975\ProxyCallFixer.cs" />
+    <Compile Include="V8_1_2_4975\ResolverInfoBase.cs" />
+    <Compile Include="V8_1_2_4975\ResourceDecrypter.cs" />
+    <Compile Include="V8_1_2_4975\ResourceDecrypterInfo.cs" />
+    <Compile Include="V8_1_2_4975\ResourceResolver.cs" />
+    <Compile Include="V8_1_2_4975\ResourceResolverInfo.cs" />
+    <Compile Include="V8_1_2_4975\SimpleZipInfo.cs" />
+    <Compile Include="V8_1_2_4975\StringDecrypter.cs" />
+    <Compile Include="V8_1_2_4975\StringDecrypterInfo.cs" />
+    <Compile Include="V8_1_2_4975\StringEncoderClassFinder.cs" />
+    <Compile Include="V8_1_2_4975\TamperProtectionRemover.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\de4dot.blocks\de4dot.blocks.csproj">
@@ -75,5 +92,6 @@
       <Name>dnlib</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

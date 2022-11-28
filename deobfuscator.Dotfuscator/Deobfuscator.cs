@@ -82,7 +82,7 @@ namespace de4dot.plugin.deobfuscators.Dotfuscator {
 				return 1;
 			}
 
-			Console.WriteLine("no dotfuscator for this version, please select dotfuscator version:");
+			Console.WriteLine("no dotfuscator for this version, please select version:");
 			Console.WriteLine("0: default");
 			Console.WriteLine("1: 239392:1:0:4.43.3.9947");
 			
