@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace deobfuscator.SmartAssembly
+namespace de4dot.plugin.deobfuscators.SmartAssembly
 {
     public class Class1
     {

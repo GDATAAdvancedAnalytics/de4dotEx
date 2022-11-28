@@ -25,7 +25,7 @@ using de4dot.code;
 using de4dot.code.deobfuscators;
 
 namespace de4dot.plugin.deobfuscators.Dotfuscator.V239392_1_0_4_43_3_9947 {
-	class StringDecrypter : IStringDecrypter{
+	class StringDecrypter{
 		ModuleDefMD module;
 		MethodDefAndDeclaringTypeDict<StringDecrypterInfo> stringDecrypterMethods = new MethodDefAndDeclaringTypeDict<StringDecrypterInfo>();
 

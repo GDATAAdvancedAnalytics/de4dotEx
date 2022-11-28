@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>f5a5e6dd-6ef4-40f0-b8c7-dc3b245cef8d</ProjectGuid>
+    <ProjectGuid>{F5A5E6DD-6EF4-40F0-B8C7-DC3B245CEF8D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>deobfuscator.SmartAssembly</RootNamespace>
@@ -31,24 +31,48 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System"/>
-    
-    <Reference Include="System.Core"/>
-    <Reference Include="System.Xml.Linq"/>
-    <Reference Include="System.Data.DataSetExtensions"/>
-    
-    
-    <Reference Include="Microsoft.CSharp"/>
-    
-    <Reference Include="System.Data"/>
-    
-    <Reference Include="System.Net.Http"/>
-    
-    <Reference Include="System.Xml"/>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Default\AssemblyResolver.cs" />
+    <Compile Include="Default\AssemblyResolverInfo.cs" />
+    <Compile Include="AutomatedErrorReportingFinder.cs" />
+    <Compile Include="Deobfuscator.cs" />
+    <Compile Include="MemoryManagerInfo.cs" />
+    <Compile Include="ProxyCallFixer.cs" />
+    <Compile Include="Default\ResolverInfoBase.cs" />
+    <Compile Include="Default\ResourceDecrypter.cs" />
+    <Compile Include="Default\ResourceDecrypterInfo.cs" />
+    <Compile Include="Default\ResourceResolver.cs" />
+    <Compile Include="Default\ResourceResolverInfo.cs" />
+    <Compile Include="Default\SimpleZipInfo.cs" />
+    <Compile Include="Default\StringDecrypter.cs" />
+    <Compile Include="StringDecrypterInfo.cs" />
+    <Compile Include="Default\StringEncoderClassFinder.cs" />
+    <Compile Include="TamperProtectionRemover.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\de4dot.blocks\de4dot.blocks.csproj">
+      <Project>{045b96f2-af80-4c4c-8d27-e38635ac705e}</Project>
+      <Name>de4dot.blocks</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\de4dot.code\de4dot.code.csproj">
+      <Project>{4d10b9eb-3bf1-4d61-a389-cb019e8c9622}</Project>
+      <Name>de4dot.code</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\dnlib\dnlib.csproj">
+      <Project>{061427ac-89b0-49f3-ab86-3f6b806ff079}</Project>
+      <Name>dnlib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
- </Project>
+</Project>

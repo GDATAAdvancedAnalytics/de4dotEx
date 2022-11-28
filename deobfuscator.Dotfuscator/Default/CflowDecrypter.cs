@@ -22,7 +22,7 @@ using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.plugin.deobfuscators.Dotfuscator.Default {
-	class CflowDecrypter : ICflowDecrypter {
+	class CflowDecrypter {
 		ModuleDefMD module;
 
 		public CflowDecrypter(ModuleDefMD module) => this.module = module;

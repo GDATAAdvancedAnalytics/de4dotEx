@@ -21,12 +21,11 @@ using System.Collections.Generic;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using de4dot.blocks;
-using de4dot.plugin.deobfuscators.Dotfuscator;
-using de4dot.code.deobfuscators;
 using de4dot.code;
+using de4dot.code.deobfuscators;
 
 namespace de4dot.plugin.deobfuscators.Dotfuscator.Default {
-	class StringDecrypter : IStringDecrypter{
+	class StringDecrypter{
 		ModuleDefMD module;
 		MethodDefAndDeclaringTypeDict<StringDecrypterInfo> stringDecrypterMethods = new MethodDefAndDeclaringTypeDict<StringDecrypterInfo>();
 

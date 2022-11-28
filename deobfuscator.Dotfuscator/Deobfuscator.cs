@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using dnlib.DotNet;
 using de4dot.blocks;
+using de4dot.code;
 using de4dot.code.deobfuscators;
 
 namespace de4dot.plugin.deobfuscators.Dotfuscator {
@@ -54,7 +55,7 @@ namespace de4dot.plugin.deobfuscators.Dotfuscator {
 	class Deobfuscator : DeobfuscatorBase {
 		string obfuscatorName = "Dotfuscator";
 
-		IStringDecrypter stringDecrypter;
+		IDeobfuscatorVer verDeobfuscator;
 		bool foundDotfuscatorAttribute = false;
 
 		internal class Options : OptionsBase {
@@ -68,18 +69,50 @@ namespace de4dot.plugin.deobfuscators.Dotfuscator {
 		protected override int DetectInternal() {
 			int val = 0;
 
-			if (stringDecrypter.Detected)
-				val += 100;
+			val += verDeobfuscator.DetectInternal();
 			if (foundDotfuscatorAttribute)
 				val += 10;
 
 			return val;
 		}
 
+		private int SelectVer() {
+			Console.WriteLine("find version:" + obfuscatorName);
+			if (obfuscatorName.Contains("239392:1:0:4.43.3.9947")) {
+				return 1;
+			}
+
+			Console.WriteLine("no dotfuscator for this version, please select dotfuscator version:");
+			Console.WriteLine("0: default");
+			Console.WriteLine("1: 239392:1:0:4.43.3.9947");
+			
+			string strVer = Console.ReadLine();
+			int nVer = 0;
+			if (int.TryParse(strVer, out nVer)) {
+				nVer = 0;
+			}
+			return nVer;
+		}
+
+		private IDeobfuscatorVer GetDeobfuscator() {
+			IDeobfuscatorVer deobfuscator = null;
+			int ver = SelectVer();
+			switch (ver) {
+			case 1:
+				deobfuscator = new V239392_1_0_4_43_3_9947.DeobfuscatorVer(this);
+				break;
+			case 0:
+			default:
+				deobfuscator = new Default.DeobfuscatorVer(this);
+				break;
+			}
+			return deobfuscator;
+		}
+
 		protected override void ScanForObfuscator() {
 			FindDotfuscatorAttribute();
-			stringDecrypter = GetStringDecrypter();
-			stringDecrypter.Find(DeobfuscatedFile);
+			verDeobfuscator = GetDeobfuscator();
+			verDeobfuscator.ScanForObfuscator();
 		}
 
 		void FindDotfuscatorAttribute() {
@@ -106,54 +139,29 @@ namespace de4dot.plugin.deobfuscators.Dotfuscator {
 
 		public override void DeobfuscateBegin() {
 			base.DeobfuscateBegin();
-			DoCflowClean();
-			DoStringBuilderClean();
-			foreach (var info in stringDecrypter.StringDecrypterInfos)
-				staticStringInliner.Add(info.method, (method, gim, args) => stringDecrypter.Decrypt(method, (string)args[0], (int)args[1]));
+			verDeobfuscator.DeobfuscateBegin();
 			DeobfuscatedFile.StringDecryptersAdded();
 		}
 
 		public override void DeobfuscateEnd() {
 			if (CanRemoveStringDecrypterType)
-				AddMethodsToBeRemoved(stringDecrypter.StringDecrypters, "String decrypter method");
-
+				AddMethodsToBeRemoved(verDeobfuscator.GetStringDecrypters(), "String decrypter method");
+			verDeobfuscator.DeobfuscateEnd();
 			base.DeobfuscateEnd();
 		}
 
 		public override IEnumerable<int> GetStringDecrypterMethods() {
-			var list = new List<int>();
-			foreach (var method in stringDecrypter.StringDecrypters)
-				list.Add(method.MDToken.ToInt32());
-			return list;
+			return verDeobfuscator.GetStringDecrypterMethods();
 		}
 
-		void DoCflowClean() {
-			var cflowDescrypter = GetCflowDecrypter();
-			cflowDescrypter.CflowClean();
+		public ModuleDefMD GetModule() {
+			return module;
 		}
-		
-		void DoStringBuilderClean() {
-			var decrypter = GetStringBuilderDecrypter();
-			decrypter.StringBuilderClean();
+		public IDeobfuscatedFile GetDeobfuscatedFile() {
+			return DeobfuscatedFile;
 		}
-
-		IStringDecrypter GetStringDecrypter() 
-		{
-			if (obfuscatorName.Contains("239392:1:0:4.43.3.9947"))
-				return new V239392_1_0_4_43_3_9947.StringDecrypter(module);
-			return new Default.StringDecrypter(module);
-		}
-
-		ICflowDecrypter GetCflowDecrypter() {
-			if (obfuscatorName.Contains("239392:1:0:4.43.3.9947"))
-				return new V239392_1_0_4_43_3_9947.CflowDecrypter(module);
-			return new Default.CflowDecrypter(module);
-		}
-
-		IStringBuilderDecrypter GetStringBuilderDecrypter() {
-			if (obfuscatorName.Contains("239392:1:0:4.43.3.9947"))
-				return new V239392_1_0_4_43_3_9947.StringBuilderDecrypter(module);
-			return new Default.StringBuilderDecrypter(module);
+		public StaticStringInliner GetStaticStringInliner() {
+			return staticStringInliner;
 		}
 	}
 }

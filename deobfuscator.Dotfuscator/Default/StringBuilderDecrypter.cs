@@ -45,7 +45,7 @@ namespace de4dot.plugin.deobfuscators.Dotfuscator.Default {
 	///            stringBuilder2.Append((char)(array2[3] + 136));
 	///            string text = stringBuilder2.ToString();
 	/// </code>
-	public class StringBuilderDecrypter : IStringBuilderDecrypter {
+	public class StringBuilderDecrypter {
 		ModuleDefMD module;
 
 		public StringBuilderDecrypter(ModuleDefMD module) => this.module = module;
