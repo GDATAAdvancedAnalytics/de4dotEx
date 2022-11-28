@@ -20,8 +20,10 @@
 using System;
 using System.Collections.Generic;
 using dnlib.DotNet;
+using de4dot.code;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class AssemblyResolver {
 		ResourceDecrypter resourceDecrypter;
 		AssemblyResolverInfo assemblyResolverInfo;
@@ -39,7 +41,7 @@ namespace de4dot.code.deobfuscators.SmartAssembly {
 			return resourceDecrypter.CanDecrypt;
 		}
 
-		public IEnumerable<Tuple<EmbeddedAssemblyInfo, byte[]>> GetDecryptedResources() {
+		public IEnumerable<code.Tuple<EmbeddedAssemblyInfo, byte[]>> GetDecryptedResources() {
 			var returned = new Dictionary<Resource, bool>();
 			foreach (var info in assemblyResolverInfo.EmbeddedAssemblyInfos) {
 				if (info.resource == null) {
@@ -50,7 +52,7 @@ namespace de4dot.code.deobfuscators.SmartAssembly {
 					continue;
 				returned[info.resource] = true;
 
-				yield return new Tuple<EmbeddedAssemblyInfo, byte[]> {
+				yield return new code.Tuple<EmbeddedAssemblyInfo, byte[]> {
 					Item1 = info,
 					Item2 = DecryptResource(info),
 				};

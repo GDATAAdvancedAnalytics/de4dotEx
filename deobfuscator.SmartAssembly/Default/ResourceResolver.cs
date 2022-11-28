@@ -18,8 +18,9 @@
 */
 
 using dnlib.DotNet;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class ResourceResolver {
 		ModuleDefMD module;
 		AssemblyResolver assemblyResolver;

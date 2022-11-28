@@ -20,7 +20,7 @@
 using dnlib.DotNet;
 using de4dot.blocks;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class SimpleZipInfo {
 
 		public static bool IsSimpleZipDecryptMethod_QuickCheck(ModuleDefMD module, IMethod method, out MethodDef simpleZipTypeMethod) {

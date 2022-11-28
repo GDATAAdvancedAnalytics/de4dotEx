@@ -24,7 +24,7 @@ using de4dot.blocks;
 using de4dot.code;
 using de4dot.code.deobfuscators;
 
-namespace de4dot.plugin.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class ProxyCallFixer : ProxyCallFixer1 {
 		static readonly Dictionary<char, int> specialCharsDict = new Dictionary<char, int>();
 		static readonly char[] specialChars = new char[] {

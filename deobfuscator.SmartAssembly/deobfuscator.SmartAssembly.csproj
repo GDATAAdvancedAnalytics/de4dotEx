@@ -44,10 +44,11 @@
     <Compile Include="Class1.cs" />
     <Compile Include="Default\AssemblyResolver.cs" />
     <Compile Include="Default\AssemblyResolverInfo.cs" />
-    <Compile Include="AutomatedErrorReportingFinder.cs" />
+    <Compile Include="Default\AutomatedErrorReportingFinder.cs" />
+    <Compile Include="Default\Deobfuscator.cs" />
     <Compile Include="Deobfuscator.cs" />
-    <Compile Include="MemoryManagerInfo.cs" />
-    <Compile Include="ProxyCallFixer.cs" />
+    <Compile Include="Default\MemoryManagerInfo.cs" />
+    <Compile Include="Default\ProxyCallFixer.cs" />
     <Compile Include="Default\ResolverInfoBase.cs" />
     <Compile Include="Default\ResourceDecrypter.cs" />
     <Compile Include="Default\ResourceDecrypterInfo.cs" />
@@ -55,9 +56,9 @@
     <Compile Include="Default\ResourceResolverInfo.cs" />
     <Compile Include="Default\SimpleZipInfo.cs" />
     <Compile Include="Default\StringDecrypter.cs" />
-    <Compile Include="StringDecrypterInfo.cs" />
+    <Compile Include="Default\StringDecrypterInfo.cs" />
     <Compile Include="Default\StringEncoderClassFinder.cs" />
-    <Compile Include="TamperProtectionRemover.cs" />
+    <Compile Include="Default\TamperProtectionRemover.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

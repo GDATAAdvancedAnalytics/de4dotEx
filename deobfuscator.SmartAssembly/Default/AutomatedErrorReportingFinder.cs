@@ -23,7 +23,7 @@ using dnlib.DotNet.Emit;
 using de4dot.blocks;
 using de4dot.code.deobfuscators;
 
-namespace de4dot.plugin.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class AutomatedErrorReportingFinder : ExceptionLoggerRemover {
 		ModuleDefMD module;
 		bool enabled;

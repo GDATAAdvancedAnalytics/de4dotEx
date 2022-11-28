@@ -21,8 +21,9 @@ using System.Collections.Generic;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using de4dot.blocks;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class ResourceDecrypterInfo {
 		ModuleDefMD module;
 		MethodDef simpleZipTypeDecryptMethod;

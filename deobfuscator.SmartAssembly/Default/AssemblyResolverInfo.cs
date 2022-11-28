@@ -23,8 +23,10 @@ using System.Text;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using de4dot.blocks;
+using de4dot.code;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	public class EmbeddedAssemblyInfo {
 		public string assemblyName;
 		public string simpleName;

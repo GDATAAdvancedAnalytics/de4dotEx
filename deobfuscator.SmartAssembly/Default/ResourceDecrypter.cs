@@ -22,8 +22,9 @@ using System.IO;
 using System.Security.Cryptography;
 using dnlib.DotNet;
 using ICSharpCode.SharpZipLib.Zip.Compression;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class ResourceDecrypter {
 		ResourceDecrypterInfo resourceDecrypterInfo;
 

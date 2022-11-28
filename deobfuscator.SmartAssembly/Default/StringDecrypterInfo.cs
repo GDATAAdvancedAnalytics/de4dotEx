@@ -25,7 +25,7 @@ using de4dot.blocks;
 using de4dot.code.deobfuscators;
 
 
-namespace de4dot.plugin.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	enum StringDecrypterVersion {
 		V1,
 		V2,

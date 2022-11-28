@@ -24,7 +24,7 @@ using dnlib.DotNet.Emit;
 using de4dot.blocks;
 using de4dot.code;
 
-namespace de4dot.plugin.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class TamperProtectionRemover {
 		ModuleDefMD module;
 		List<MethodDef> pinvokeMethods = new List<MethodDef>();

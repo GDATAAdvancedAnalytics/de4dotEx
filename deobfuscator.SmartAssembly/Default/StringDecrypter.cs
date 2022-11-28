@@ -19,8 +19,9 @@
 
 using System;
 using System.Text;
+using de4dot.code.deobfuscators;
 
-namespace de4dot.code.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class StringDecrypter {
 		int stringOffset;
 		byte[] decryptedData;

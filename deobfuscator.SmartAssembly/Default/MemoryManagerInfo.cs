@@ -20,7 +20,7 @@
 using dnlib.DotNet;
 using de4dot.blocks;
 
-namespace de4dot.plugin.deobfuscators.SmartAssembly {
+namespace de4dot.plugin.deobfuscators.SmartAssembly.Default {
 	class MemoryManagerInfo {
 		ModuleDefMD module;
 		TypeDef memoryManagerType;
