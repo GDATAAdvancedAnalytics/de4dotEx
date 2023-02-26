@@ -450,8 +450,8 @@ namespace de4dot.blocks.cflow {
 				return CreateUnknown();
 			if (b.Value == 0)
 				return a;
-			if (b.Value < 0 || b.Value >= sizeof(int) * 8)
-				return CreateUnknown();
+			//if (b.Value < 0 || b.Value >= sizeof(int) * 8)
+			//	return CreateUnknown();
 			int shift = b.Value;
 			uint validMask = (a.ValidMask << shift) | (uint.MaxValue >> (sizeof(int) * 8 - shift));
 			return new Int32Value(a.Value << shift, validMask);
@@ -462,8 +462,8 @@ namespace de4dot.blocks.cflow {
 				return CreateUnknown();
 			if (b.Value == 0)
 				return a;
-			if (b.Value < 0 || b.Value >= sizeof(int) * 8)
-				return CreateUnknown();
+			//if (b.Value < 0 || b.Value >= sizeof(int) * 8)
+			//	return CreateUnknown();
 			int shift = b.Value;
 			uint validMask = a.ValidMask >> shift;
 			if (a.IsBitValid(sizeof(int) * 8 - 1))
@@ -476,8 +476,8 @@ namespace de4dot.blocks.cflow {
 				return CreateUnknown();
 			if (b.Value == 0)
 				return a;
-			if (b.Value < 0 || b.Value >= sizeof(int) * 8)
-				return CreateUnknown();
+			//if (b.Value < 0 || b.Value >= sizeof(int) * 8)
+			//	return CreateUnknown();
 			int shift = b.Value;
 			uint validMask = (a.ValidMask >> shift) | (uint.MaxValue << (sizeof(int) * 8 - shift));
 			return new Int32Value((int)((uint)a.Value >> shift), validMask);

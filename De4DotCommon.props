@@ -15,7 +15,7 @@
     <OutputPath>$(MSBuildThisFileDirectory)\$(Configuration)</OutputPath>
     <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
 
-    <DnlibVersion>3.5.0</DnlibVersion>
+    <DnlibVersion>3.6.0</DnlibVersion>
   </PropertyGroup>
 
 </Project>

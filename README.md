@@ -65,6 +65,13 @@ Supported obfuscators/packers
 * Spices.Net
 * Xenocode
 
+There are some other obfuscators/packers that are not in supported list explicitly, so their status is unclear:
+
+* Confuser
+* ConfuserEx - Merged from https://github.com/ViRb3/de4dot-cex , [read the full ReadMe by @ViRb3](README-CEx.md) for more info. You may need a native library for [BeaEngine](https://github.com/BeaEngine/beaengine) (version `5.3.0`) for your platform to use the corresponding functionality! If you use another version you may need to recompile with the updated [C# bindings](https://github.com/BeaEngine/beaengine/tree/master/headers/C%23%20headers).
+* Osu
+* PCL
+
 Some of the above obfuscators are rarely used (eg. Goliath.NET), so they have had much less testing. Help me out by reporting bugs or problems you find.
 
 Warning

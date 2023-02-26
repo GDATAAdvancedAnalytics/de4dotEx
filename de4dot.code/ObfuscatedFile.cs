@@ -264,12 +264,13 @@ namespace de4dot.code {
 			foreach (var deob in deobfuscators) {
 				this.deob = deob;	// So we can call deob.CanInlineMethods in deobfuscate()
 				int val;
-				try {
-					val = deob.Detect();
-				}
+                //TODO: Re-enable exception handler
+                //try {
+                val = deob.Detect();
+				/*}
 				catch {
 					val = deob.Type == "un" ? 1 : 0;
-				}
+				}*/
 				Logger.v("{0,3}: {1}", val, deob.TypeLong);
 				if (val > 0 && deob.Type != "un")
 					allDetected.Add(deob);
@@ -552,9 +553,10 @@ namespace de4dot.code {
 				}
 
 				int oldIndentLevel = Logger.Instance.IndentLevel;
-				try {
+				//TODO: Re-enable exception handler
+                //try {
 					Deobfuscate(method, cflowDeobfuscator, methodPrinter, isVerbose, isVV);
-				}
+				/*}
 				catch (Exception ex) {
 					if (!CanLoadMethodBody(method)) {
 						if (isVerbose)
@@ -569,8 +571,9 @@ namespace de4dot.code {
 				}
 				finally {
 					Logger.Instance.IndentLevel = oldIndentLevel;
-				}
-				RemoveNoInliningAttribute(method);
+                }*/
+
+               RemoveNoInliningAttribute(method);
 
 				if (isVerbose)
 					Logger.Instance.DeIndent();
