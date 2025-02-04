@@ -15,12 +15,12 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore ./de4dot.netcore.sln
     - name: Build
       run: dotnet build --no-restore -c Release ./de4dot.netcore.sln
     - uses: actions/upload-artifact@main
       with:
-        name: de4dot-net7.0
-        path: Release/net7.0
+        name: de4dot-net8.0
+        path: Release/net8.0
