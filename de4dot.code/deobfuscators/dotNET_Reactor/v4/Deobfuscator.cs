@@ -640,6 +640,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			metadataTokenObfuscator.Deobfuscate(blocks);
 			FixTypeofDecrypterInstructions(blocks);
 			RemoveAntiStrongNameCode(blocks);
+			stringDecrypter.DeobfuscateXored(blocks);
 			base.DeobfuscateMethodEnd(blocks);
 		}
 

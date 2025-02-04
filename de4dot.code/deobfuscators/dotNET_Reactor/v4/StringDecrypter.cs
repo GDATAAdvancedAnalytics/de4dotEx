@@ -34,6 +34,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		MyPEImage peImage;
 		byte[] fileData;
 		StringDecrypterVersion stringDecrypterVersion;
+		Dictionary<string, int> constantFields;
 
 		enum StringDecrypterVersion {
 			UNKNOWN = 0,
@@ -244,5 +245,88 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		}
 
 		public string Decrypt(string s) => Encoding.Unicode.GetString(Convert.FromBase64String(s));
+
+		/**
+		 * Determines whether a method has many fields that receive a constant int
+		 * by checking the ratio between ldc.i4 and stfld.
+		 */
+		private bool IsConstantsInitializer(MethodDef method) {
+			int numLdcI4 = 0, numStfld = 0;
+			foreach (var ins in method.Body.Instructions) {
+				if (ins.IsLdcI4()) {
+					numLdcI4++;
+				} else if (ins.OpCode.Code == Code.Stfld) {
+					numStfld++;
+				}
+			}
+
+			return numStfld > 5 && numLdcI4 / (double)numStfld > 0.9;
+		}
+
+		/**
+		 * Creates a mapping of field name -> value for int assignments.
+		 */
+		private Dictionary<string, int> GetConstantFields(MethodDef method) {
+			var result = new Dictionary<string, int>();
+
+			int val = 0;
+			foreach (var ins in method.Body.Instructions) {
+				if (ins.IsLdcI4()) {
+					val = ins.GetLdcI4Value();
+				} else if (ins.OpCode.Code == Code.Stfld) {
+					result[((IField)ins.Operand).Name] = val;
+				}
+			}
+
+			return result;
+		}
+
+		private Dictionary<string, int> LoadConstantFields(TypeDef type) {
+			foreach (var method in type.Methods) {
+				if (IsConstantsInitializer(method)) {
+					return GetConstantFields(method);
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * Replaces all references to the string decryption function by a load of the respective decrypted string.
+		 * This is for special cases where de4dot's normal static decryptor is unable to obtain the offset constants.
+		 */
+		public void DeobfuscateXored(Blocks blocks) {
+			if (decrypterInfos.Count != 1) return;
+
+			foreach (var block in blocks.MethodBlocks.GetAllBlocks()) {
+				var instrs = block.Instructions;
+				for (int i = 4; i < instrs.Count; i++) {
+					var instr = instrs[i];
+
+					if (instr.OpCode != OpCodes.Call || instr.Operand != decrypterInfos[0].method)
+						continue;
+
+					if (instrs[i - 1].OpCode != OpCodes.Xor
+					    || instrs[i - 2].OpCode != OpCodes.Ldfld
+					    || instrs[i - 3].OpCode != OpCodes.Ldsfld
+					    || instrs[i - 4].OpCode != OpCodes.Ldc_I4)
+						continue;
+
+					int xorConst = instrs[i - 4].GetLdcI4Value();
+					if (constantFields == null) {
+						constantFields = LoadConstantFields(((FieldDef)instrs[i - 3].Operand).DeclaringType);
+						if (constantFields == null) {
+							Logger.w("Failed to load constant fields");
+							return;
+						}
+					}
+					int xorField = constantFields[((FieldDef)instrs[i - 2].Operand).Name];
+					int offset = xorConst ^ xorField;
+
+					var decryptedString = Decrypt(decrypterInfos[0].method, offset);
+					block.Replace(i - 4, 5, OpCodes.Ldstr.ToInstruction(decryptedString));
+				}
+			}
+		}
 	}
 }
