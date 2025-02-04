@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using de4dot.blocks;
 using de4dot.blocks.cflow;
-using de4dot.code.deobfuscators.PCL;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using dnlib.DotNet.Writer;
@@ -31,7 +30,7 @@ namespace de4dot.code.deobfuscators {
 	public abstract class DeobfuscatorBase : IDeobfuscator, IModuleWriterListener {
 		public const string DEFAULT_VALID_NAME_REGEX = @"^[a-zA-Z_<{$][a-zA-Z_0-9<>{}$.`-]*$";
 		public const string DEFAULT_ASIAN_VALID_NAME_REGEX = @"^[\u2E80-\u9FFFa-zA-Z_<{$][\u2E80-\u9FFFa-zA-Z_0-9<>{}$.`-]*$";
-		public bool fuckPCLMode = false;
+
 		class RemoveInfo<T> {
 			public T obj;
 			public string reason;
@@ -137,15 +136,6 @@ namespace de4dot.code.deobfuscators {
 			throw new ApplicationException("moduleReloaded() must be overridden by the deobfuscator");
 
 		public virtual void DeobfuscateBegin() {
-			//PCL Fucker
-			foreach (var type in module.Types) {
-				var fn = type.DefinitionAssembly.FullName;
-				if (fn.Contains("Plain Craft Launcher 2")) {
-					fuckPCLMode = true;
-					Logger.n("Found Plain Craft Launcher 2!");
-					break;
-				}
-			}
 			ModuleBytes = null;
 		}
 		public virtual void DeobfuscateMethodBegin(Blocks blocks) { }
@@ -155,15 +145,6 @@ namespace de4dot.code.deobfuscators {
 
 		public virtual void DeobfuscateEnd() {
 			// Make sure the TypeDefCache isn't enabled while we modify types or remove stuff
-
-			//PCL Fucker
-
-			if (fuckPCLMode) {
-				Fucker fucker = new Fucker(module);
-				Logger.n("Detected PCL2, Try Cracking...");
-				fucker.startFuck();
-			}
-
 			bool cacheState = module.EnableTypeDefFindCache;
 			module.EnableTypeDefFindCache = false;
 
