@@ -311,7 +311,7 @@ namespace de4dot.blocks.cflow {
 
 		class InstructionExpressionFinder {
 			List<int> deadInstructions = new List<int>();
-			Block block;
+			Block block = null!;
 			bool methodHasReturnValue;
 
 			public List<int> DeadInstructions => deadInstructions;

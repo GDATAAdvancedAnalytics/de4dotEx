@@ -25,12 +25,12 @@ namespace de4dot.blocks.cflow {
 	public class InstructionEmulator {
 		ValueStack valueStack = new ValueStack();
 		Dictionary<Value, bool> protectedStackValues = new Dictionary<Value, bool>();
-		IList<Parameter> parameterDefs;
-		IList<Local> localDefs;
+		IList<Parameter> parameterDefs = null!;
+		IList<Local> localDefs = null!;
 		List<Value> args = new List<Value>();
 		List<Value> locals = new List<Value>();
 
-		MethodDef prev_method;
+		MethodDef prev_method = null!;
 		List<Value> cached_args = new List<Value>();
 		List<Value> cached_locals = new List<Value>();
 		List<Value> cached_zeroed_locals = new List<Value>();
@@ -73,9 +73,9 @@ namespace de4dot.blocks.cflow {
 		}
 
 		public void SetProtected(Value value) => protectedStackValues[value] = true;
-		static Value GetUnknownValue(ITypeDefOrRef type) => GetUnknownValue(type.ToTypeSig(false));
+		static Value GetUnknownValue(ITypeDefOrRef? type) => GetUnknownValue(type.ToTypeSig(false));
 
-		static Value GetUnknownValue(TypeSig type) {
+		static Value GetUnknownValue(TypeSig? type) {
 			if (type == null)
 				return new UnknownValue();
 			switch (type.ElementType) {
@@ -111,7 +111,7 @@ namespace de4dot.blocks.cflow {
 			return new UnknownValue();
 		}
 
-		Value TruncateValue(Value value, TypeSig type) {
+		Value TruncateValue(Value value, TypeSig? type) {
 			if (type == null)
 				return value;
 			if (protectedStackValues.ContainsKey(value))
@@ -182,7 +182,7 @@ namespace de4dot.blocks.cflow {
 			return GetArg(arg.Index);
 		}
 
-		TypeSig GetArgType(int index) {
+		TypeSig? GetArgType(int index) {
 			if (0 <= index && index < parameterDefs.Count)
 				return parameterDefs[index].Type;
 			return null;
@@ -1187,7 +1187,7 @@ namespace de4dot.blocks.cflow {
 
 		void Emulate_Ldsfld(Instruction instr) => EmulateLoadField(instr.Operand as IField);
 
-		void EmulateLoadField(IField field) {
+		void EmulateLoadField(IField? field) {
 			if (field != null)
 				valueStack.Push(GetUnknownValue(field.FieldSig.GetFieldType()));
 			else

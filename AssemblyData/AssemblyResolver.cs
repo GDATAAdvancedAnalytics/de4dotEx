@@ -110,6 +110,8 @@ namespace AssemblyData {
 			AddAssemblySearchPath(dirName);
 
 			try {
+				if (!File.Exists(configFilename))
+					return;
 				using (var xmlStream = new FileStream(configFilename, FileMode.Open, FileAccess.Read, FileShare.Read)) {
 					var doc = new XmlDocument();
 					doc.Load(XmlReader.Create(xmlStream));

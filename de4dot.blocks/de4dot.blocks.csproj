@@ -2,8 +2,13 @@
 
   <Import Project="..\De4DotCommon.props" />
 
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>true</WarningsAsErrors>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="dnlib" Version="$(DnlibVersion)" />
+    <PackageReference Include="dnlib" Version="3.6.0" />
   </ItemGroup>
 
 </Project>

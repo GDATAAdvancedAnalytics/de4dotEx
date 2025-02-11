@@ -18,20 +18,23 @@
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
 	// Replace stloc + ldloc with dup + stloc
 	class StLdlocFixer : BlockDeobfuscator {
-		IList<Local> locals;
+		IList<Local>? locals;
 
 		protected override void Initialize(List<Block> allBlocks) {
 			base.Initialize(allBlocks);
+			Debug.Assert(blocks != null);
 			locals = blocks.Locals;
 		}
 
 		protected override bool Deobfuscate(Block block) {
+			Debug.Assert(locals != null);
 			bool modified = false;
 			var instructions = block.Instructions;
 			for (int i = 0; i < instructions.Count; i++) {
@@ -50,6 +53,7 @@ namespace de4dot.blocks.cflow {
 					if (!instructions[i + 1].IsLdloc())
 						break;
 					var local = Instr.GetLocalVar(locals, instr);
+					Debug.Assert(local != null);
 					if (local.Type.ElementType != ElementType.Boolean)
 						continue;
 					if (local != Instr.GetLocalVar(locals, instructions[i + 1]))

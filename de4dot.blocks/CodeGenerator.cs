@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
@@ -147,7 +148,7 @@ namespace de4dot.blocks {
 			return blockInfos[index];
 		}
 
-		static Instruction GetInstruction(IList<Instruction> allInstructions, int i) {
+		static Instruction? GetInstruction(IList<Instruction> allInstructions, int i) {
 			if (i < allInstructions.Count)
 				return allInstructions[i];
 			return null;
@@ -188,6 +189,7 @@ namespace de4dot.blocks {
 
 		// Write all blocks to the blocks list
 		void LayOutBlocks() {
+			Debug.Assert(methodBlocks.BaseBlocks != null);
 			if (methodBlocks.BaseBlocks.Count == 0)
 				return;
 
@@ -225,12 +227,12 @@ namespace de4dot.blocks {
 
 		// Returns the BaseBlock's ScopeBlock. The return value is either current ScopeBlock,
 		// the ScopeBlock one step below current (current one's child), or null.
-		ScopeBlock GetScopeBlock(BaseBlock bb) {
+		ScopeBlock? GetScopeBlock(BaseBlock bb) {
 			var current = stateStack.Peek();
 
 			if (current.scopeBlock.IsOurBaseBlock(bb))
 				return current.scopeBlock;
-			return (ScopeBlock)current.scopeBlock.ToChild(bb);
+			return (ScopeBlock?)current.scopeBlock.ToChild(bb);
 		}
 
 		void DoBaseBlock(BaseBlock bb) {
@@ -247,14 +249,14 @@ namespace de4dot.blocks {
 				return;
 			visited[bb] = true;
 
-			if (bb is Block)
-				DoBlock(bb as Block);
-			else if (bb is TryBlock)
-				DoTryBlock(bb as TryBlock);
-			else if (bb is FilterHandlerBlock)
-				DoFilterHandlerBlock(bb as FilterHandlerBlock);
-			else if (bb is HandlerBlock)
-				DoHandlerBlock(bb as HandlerBlock);
+			if (bb is Block block)
+				DoBlock(block);
+			else if (bb is TryBlock tryBlock)
+				DoTryBlock(tryBlock);
+			else if (bb is FilterHandlerBlock filterHandlerBlock)
+				DoFilterHandlerBlock(filterHandlerBlock);
+			else if (bb is HandlerBlock handlerBlock)
+				DoHandlerBlock(handlerBlock);
 			else if (bb is TryHandlerBlock) {
 				// The try handler block is usually after the try block, but sometimes it isn't...
 				// Handle that case here.
@@ -270,6 +272,7 @@ namespace de4dot.blocks {
 		void DoTryBlock(TryBlock tryBlock) {
 			var tryStart = blocks.Count;
 			stateStack.Push(new BlockState(tryBlock));
+			Debug.Assert(tryBlock.BaseBlocks != null);
 			ProcessBaseBlocks(tryBlock.BaseBlocks, (block) => {
 				return block.LastInstr.OpCode == OpCodes.Leave ||
 						block.LastInstr.OpCode == OpCodes.Leave_S;
@@ -301,6 +304,7 @@ namespace de4dot.blocks {
 
 		void DoFilterHandlerBlock(FilterHandlerBlock filterHandlerBlock) {
 			stateStack.Push(new BlockState(filterHandlerBlock));
+			Debug.Assert(filterHandlerBlock.BaseBlocks != null);
 			ProcessBaseBlocks(filterHandlerBlock.BaseBlocks, (block) => {
 				return block.LastInstr.OpCode == OpCodes.Endfilter;	// MUST end with endfilter!
 			});
@@ -309,6 +313,7 @@ namespace de4dot.blocks {
 
 		void DoHandlerBlock(HandlerBlock handlerBlock) {
 			stateStack.Push(new BlockState(handlerBlock));
+			Debug.Assert(handlerBlock.BaseBlocks != null);
 			ProcessBaseBlocks(handlerBlock.BaseBlocks, (block) => {
 				return block.LastInstr.OpCode == OpCodes.Endfinally ||
 						block.LastInstr.OpCode == OpCodes.Leave ||

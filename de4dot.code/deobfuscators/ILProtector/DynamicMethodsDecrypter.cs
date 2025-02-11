@@ -174,7 +174,11 @@ namespace de4dot.code.deobfuscators.ILProtector {
 				return PatchRuntime(decryptAddr, info);
 			}
 
+#if NET6_0_OR_GREATER
+			[SecurityCritical]
+#else
 			[HandleProcessCorruptedStateExceptions, SecurityCritical]	// Req'd on .NET 4.0
+#endif
 			static bool PatchRuntime(IntPtr decryptAddr, PatchInfo info) {
 				try {
 					var baseAddr = new IntPtr(decryptAddr.ToInt64() - info.RvaDecryptMethod);

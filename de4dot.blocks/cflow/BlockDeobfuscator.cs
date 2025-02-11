@@ -22,8 +22,8 @@ using System.Collections.Generic;
 
 namespace de4dot.blocks.cflow {
 	public abstract class BlockDeobfuscator : IBlocksDeobfuscator {
-		protected List<Block> allBlocks;
-		protected Blocks blocks;
+		protected List<Block>? allBlocks;
+		protected Blocks? blocks;
 
 		public bool ExecuteIfNotModified { get; set; }
 

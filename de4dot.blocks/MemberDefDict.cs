@@ -32,8 +32,8 @@ namespace de4dot.blocks {
 		public IEnumerable<TValue> GetValues() => tokenToValue.Values;
 		ScopeAndTokenKey GetTokenKey(TypeDef typeDef) => new ScopeAndTokenKey(typeDef);
 
-		public TValue Find(IType typeRef) {
-			TValue value;
+		public TValue? Find(IType typeRef) {
+			TValue? value;
 			if (typeRef is TypeDef typeDef)
 				tokenToValue.TryGetValue(GetTokenKey(typeDef), out value);
 			else if (typeRef != null)
@@ -43,7 +43,7 @@ namespace de4dot.blocks {
 			return value;
 		}
 
-		public TValue FindAny(IType type) {
+		public TValue? FindAny(IType type) {
 			if (type is TypeDef typeDef && tokenToValue.TryGetValue(GetTokenKey(typeDef), out var value))
 				return value;
 
@@ -96,8 +96,8 @@ namespace de4dot.blocks {
 		ScopeAndTokenKey GetTokenKey(FieldDef fieldDef) => new ScopeAndTokenKey(fieldDef);
 		internal abstract IFieldRefKey GetRefKey(IField fieldRef);
 
-		public TValue Find(IField fieldRef) {
-			TValue value;
+		public TValue? Find(IField fieldRef) {
+			TValue? value;
 			if (fieldRef is FieldDef fieldDef)
 				tokenToValue.TryGetValue(GetTokenKey(fieldDef), out value);
 			else
@@ -105,7 +105,7 @@ namespace de4dot.blocks {
 			return value;
 		}
 
-		public TValue FindAny(IField fieldRef) {
+		public TValue? FindAny(IField fieldRef) {
 			if (fieldRef is FieldDef fieldDef && tokenToValue.TryGetValue(GetTokenKey(fieldDef), out var value))
 				return value;
 
@@ -167,8 +167,8 @@ namespace de4dot.blocks {
 		ScopeAndTokenKey GetTokenKey(MethodDef methodDef) => new ScopeAndTokenKey(methodDef);
 		internal abstract IMethodRefKey GetRefKey(IMethod methodRef);
 
-		public TValue Find(IMethod methodRef) {
-			TValue value;
+		public TValue? Find(IMethod methodRef) {
+			TValue? value;
 			if (methodRef is MethodDef methodDef)
 				tokenToValue.TryGetValue(GetTokenKey(methodDef), out value);
 			else
@@ -176,7 +176,7 @@ namespace de4dot.blocks {
 			return value;
 		}
 
-		public TValue FindAny(IMethod methodRef) {
+		public TValue? FindAny(IMethod methodRef) {
 			if (methodRef is MethodDef methodDef && tokenToValue.TryGetValue(GetTokenKey(methodDef), out var value))
 				return value;
 
@@ -237,12 +237,12 @@ namespace de4dot.blocks {
 		ScopeAndTokenKey GetTokenKey(EventDef eventRef) => new ScopeAndTokenKey(eventRef);
 		internal abstract IEventRefKey GetRefKey(EventDef eventRef);
 
-		public TValue Find(EventDef eventRef) {
+		public TValue? Find(EventDef eventRef) {
 			tokenToValue.TryGetValue(GetTokenKey(eventRef), out var value);
 			return value;
 		}
 
-		public TValue FindAny(EventDef eventRef) {
+		public TValue? FindAny(EventDef eventRef) {
 			if (tokenToValue.TryGetValue(GetTokenKey(eventRef), out var value))
 				return value;
 
@@ -285,12 +285,12 @@ namespace de4dot.blocks {
 		ScopeAndTokenKey GetTokenKey(PropertyDef propertyRef) => new ScopeAndTokenKey(propertyRef);
 		internal abstract IPropertyRefKey GetRefKey(PropertyDef propertyRef);
 
-		public TValue Find(PropertyDef propRef) {
+		public TValue? Find(PropertyDef propRef) {
 			tokenToValue.TryGetValue(GetTokenKey(propRef), out var value);
 			return value;
 		}
 
-		public TValue FindAny(PropertyDef propRef) {
+		public TValue? FindAny(PropertyDef propRef) {
 			if (tokenToValue.TryGetValue(GetTokenKey(propRef), out var value))
 				return value;
 
@@ -323,7 +323,7 @@ namespace de4dot.blocks {
 	}
 
 	sealed class ScopeAndTokenKey {
-		readonly IScope scope;
+		readonly IScope? scope;
 		readonly uint token;
 
 		public ScopeAndTokenKey(TypeDef type)
@@ -346,14 +346,14 @@ namespace de4dot.blocks {
 			: this(evt.DeclaringType?.Module, evt.MDToken.Raw) {
 		}
 
-		public ScopeAndTokenKey(IScope scope, uint token) {
+		public ScopeAndTokenKey(IScope? scope, uint token) {
 			this.scope = scope;
 			this.token = token;
 		}
 
 		public override int GetHashCode() => (int)token + GetHashCode(scope);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as ScopeAndTokenKey;
 			if (other == null)
 				return false;
@@ -363,7 +363,7 @@ namespace de4dot.blocks {
 
 		public override string ToString() => $"{token:X8} {scope}";
 
-		static bool Equals(IScope a, IScope b) {
+		static bool Equals(IScope? a, IScope? b) {
 			if (a == b)
 				return true;
 			if (a == null || b == null)
@@ -371,13 +371,13 @@ namespace de4dot.blocks {
 			return GetCanonicalizedScopeName(a) == GetCanonicalizedScopeName(b);
 		}
 
-		static int GetHashCode(IScope a) {
+		static int GetHashCode(IScope? a) {
 			if (a == null)
 				return 0;
 			return GetCanonicalizedScopeName(a).GetHashCode();
 		}
 
-		static string GetAssemblyName(IScope a) {
+		static string? GetAssemblyName(IScope a) {
 			switch (a.ScopeType) {
 			case ScopeType.AssemblyRef:
 				return ((AssemblyRef)a).Name.String;
@@ -429,14 +429,14 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SIG_COMPARER_FLAGS).GetHashCode(fieldRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as FieldRefKey;
 			if (other == null)
 				return false;
 			return new SigComparer(SIG_COMPARER_FLAGS).Equals(fieldRef, other.fieldRef);
 		}
 
-		public override string ToString() => fieldRef.ToString();
+		public override string? ToString() => fieldRef.ToString();
 	}
 
 	sealed class MethodRefKey : IMethodRefKey {
@@ -449,14 +449,14 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SIG_COMPARER_FLAGS).GetHashCode(methodRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as MethodRefKey;
 			if (other == null)
 				return false;
 			return new SigComparer(SIG_COMPARER_FLAGS).Equals(methodRef, other.methodRef);
 		}
 
-		public override string ToString() => methodRef.ToString();
+		public override string? ToString() => methodRef.ToString();
 	}
 
 	sealed class FieldRefAndDeclaringTypeKey : IFieldRefKey {
@@ -469,14 +469,14 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SIG_COMPARER_FLAGS).GetHashCode(fieldRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as FieldRefAndDeclaringTypeKey;
 			if (other == null)
 				return false;
 			return new SigComparer(SIG_COMPARER_FLAGS).Equals(fieldRef, other.fieldRef);
 		}
 
-		public override string ToString() => fieldRef.ToString();
+		public override string? ToString() => fieldRef.ToString();
 	}
 
 	sealed class MethodRefAndDeclaringTypeKey : IMethodRefKey {
@@ -489,14 +489,14 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SIG_COMPARER_FLAGS).GetHashCode(methodRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as MethodRefAndDeclaringTypeKey;
 			if (other == null)
 				return false;
 			return new SigComparer(SIG_COMPARER_FLAGS).Equals(methodRef, other.methodRef);
 		}
 
-		public override string ToString() => methodRef.ToString();
+		public override string? ToString() => methodRef.ToString();
 	}
 
 	sealed class EventRefKey : IEventRefKey {
@@ -508,7 +508,7 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer().GetHashCode(eventRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as EventRefKey;
 			if (other == null)
 				return false;
@@ -527,7 +527,7 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SigComparerOptions.CompareEventDeclaringType).GetHashCode(eventRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as EventRefAndDeclaringTypeKey;
 			if (other == null)
 				return false;
@@ -546,7 +546,7 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer().GetHashCode(propRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as PropertyRefKey;
 			if (other == null)
 				return false;
@@ -565,7 +565,7 @@ namespace de4dot.blocks {
 
 		public override int GetHashCode() => new SigComparer(SigComparerOptions.ComparePropertyDeclaringType).GetHashCode(propRef);
 
-		public override bool Equals(object obj) {
+		public override bool Equals(object? obj) {
 			var other = obj as PropertyRefAndDeclaringTypeKey;
 			if (other == null)
 				return false;

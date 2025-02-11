@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace de4dot.blocks {
 	class BlocksSorter {
@@ -43,10 +44,10 @@ namespace de4dot.blocks {
 			IList<BaseBlock> validBlocks;
 			Dictionary<BaseBlock, BlockInfo> blockToInfo = new Dictionary<BaseBlock, BlockInfo>();
 			Stack<BlockInfo> stack = new Stack<BlockInfo>();
-			List<BaseBlock> sorted;
+			List<BaseBlock>? sorted;
 			int dfsNumber = 0;
 			bool skipFirstBlock;
-			BaseBlock firstBlock;
+			BaseBlock? firstBlock;
 
 			public Sorter(ScopeBlock scopeBlock, IList<BaseBlock> validBlocks, bool skipFirstBlock) {
 				this.scopeBlock = scopeBlock;
@@ -106,7 +107,7 @@ namespace de4dot.blocks {
 				Visit(info);
 			}
 
-			BlockInfo GetInfo(BaseBlock baseBlock) {
+			BlockInfo? GetInfo(BaseBlock? baseBlock) {
 				baseBlock = scopeBlock.ToChild(baseBlock);
 				if (baseBlock == null)
 					return null;
@@ -161,9 +162,9 @@ namespace de4dot.blocks {
 
 			struct VisitState {
 				public BlockInfo Info;
-				public List<BaseBlock> Targets;
+				public List<BaseBlock>? Targets;
 				public int TargetIndex;
-				public BlockInfo TargetInfo;
+				public BlockInfo? TargetInfo;
 				public VisitState(BlockInfo info) {
 					Info = info;
 					Targets = null;
@@ -186,11 +187,12 @@ recursive_call:
 				state.Info.low = dfsNumber;
 				dfsNumber++;
 
-				state.Targets = GetTargets(state.Info.baseBlock);
+				var targets = GetTargets(state.Info.baseBlock);
+				state.Targets = targets;
 				state.TargetIndex = 0;
 return_to_caller:
-				for (; state.TargetIndex < state.Targets.Count; state.TargetIndex++) {
-					state.TargetInfo = GetInfo(state.Targets[state.TargetIndex]);
+				for (; state.TargetIndex < targets.Count; state.TargetIndex++) {
+					state.TargetInfo = GetInfo(targets[state.TargetIndex]);
 					if (state.TargetInfo == null)
 						continue;
 					if (state.TargetInfo.baseBlock == firstBlock)
@@ -215,6 +217,7 @@ return_to_caller:
 					if (ReferenceEquals(state.Info, poppedInfo))
 						break;
 				}
+				Debug.Assert(sorted != null);
 				if (sccBlocks.Count > 1) {
 					sccBlocks.Reverse();
 					var result = new Sorter(scopeBlock, sccBlocks, true).Sort();
@@ -229,6 +232,7 @@ return_from_method:
 				if (visitStateStack.Count == 0)
 					return;
 				state = visitStateStack.Pop();
+				Debug.Assert(state.TargetInfo != null);
 				state.Info.low = Math.Min(state.Info.low, state.TargetInfo.low);
 				state.TargetIndex++;
 				goto return_to_caller;
@@ -248,7 +252,7 @@ return_from_method:
 				list.Add(loopStart);
 			}
 
-			Block GetLoopStartBlock(List<BaseBlock> list) {
+			Block? GetLoopStartBlock(List<BaseBlock> list) {
 				var loopBlocks = new Dictionary<Block, bool>(list.Count);
 				foreach (var bb in list) {
 					if (bb is Block block)
@@ -269,7 +273,7 @@ return_from_method:
 				}
 
 				int max = -1;
-				Block loopStart = null;
+				Block? loopStart = null;
 				foreach (var kv in targetBlocks) {
 					if (kv.Value <= max)
 						continue;
@@ -284,6 +288,7 @@ return_from_method:
 		public BlocksSorter(ScopeBlock scopeBlock) => this.scopeBlock = scopeBlock;
 
 		public List<BaseBlock> Sort() {
+			Debug.Assert(scopeBlock.BaseBlocks != null);
 			var sorted = new Sorter(scopeBlock, scopeBlock.BaseBlocks, false).Sort();
 			return new ForwardScanOrder(scopeBlock, sorted).Fix();
 		}

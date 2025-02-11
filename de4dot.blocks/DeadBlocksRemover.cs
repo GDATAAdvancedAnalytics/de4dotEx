@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace de4dot.blocks {
 	class DeadBlocksRemover {
@@ -50,6 +51,7 @@ namespace de4dot.blocks {
 			foreach (var baseBlock in FindDeadBlocks()) {
 				deadBlocksDict[baseBlock] = true;
 				var parent = baseBlock.Parent;
+				Debug.Assert(parent != null);
 				if (!infos.TryGetValue(parent, out var info))
 					infos[parent] = info = new ScopeBlockInfo(parent);
 				info.deadBlocks.Add(baseBlock);

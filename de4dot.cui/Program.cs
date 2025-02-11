@@ -53,6 +53,9 @@ namespace de4dot.cui {
 			if (!File.Exists(directory)) return;
 			var plugins = new List<IDeobfuscatorInfo>();
 			try {
+				if (!Directory.Exists(directory))
+					return;
+
 				var files = Directory.GetFiles(directory, "deobfuscator.*.dll", SearchOption.TopDirectoryOnly);
 				foreach (var file in files)
 					plugins.AddRange(LoadPlugin(Path.GetFullPath(file)));

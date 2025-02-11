@@ -29,9 +29,9 @@ namespace de4dot.blocks {
 
 		public int Count => methods.Count;
 		public void Add(uint token, DumpedMethod info) => methods[token] = info;
-		public DumpedMethod Get(MethodDef method) => Get(method.MDToken.ToUInt32());
+		public DumpedMethod? Get(MethodDef method) => Get(method.MDToken.ToUInt32());
 
-		public DumpedMethod Get(uint token) {
+		public DumpedMethod? Get(uint token) {
 			methods.TryGetValue(token, out var dm);
 			return dm;
 		}

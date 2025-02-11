@@ -62,6 +62,7 @@ namespace de4dot.code.renamer.asmmodules {
 		public string Filename => obfuscatedFile.Filename;
 		public ModuleDefMD ModuleDefMD => obfuscatedFile.ModuleDefMD;
 		public Module(IObfuscatedFile obfuscatedFile) => this.obfuscatedFile = obfuscatedFile;
+		public string RenameFile => obfuscatedFile.Filename + ".rename.config";
 
 		public IEnumerable<MTypeDef> GetAllTypes() => types.GetValues();
 		public IEnumerable<MethodDef> GetAllMethods() => allMethods;

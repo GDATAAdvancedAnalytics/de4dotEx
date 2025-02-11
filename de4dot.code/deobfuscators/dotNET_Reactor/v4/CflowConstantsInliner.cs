@@ -26,6 +26,8 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 							continue;
 						if (!method.IsAssembly)
 							continue;
+						if (!method.HasBody)
+							continue;
 
 						simpleDeobfuscator.Deobfuscate(method);
 

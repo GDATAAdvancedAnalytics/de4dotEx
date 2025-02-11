@@ -25,7 +25,7 @@ namespace de4dot.blocks {
 	class InstructionListParser {
 		IList<Instruction> instructions;
 		IList<ExceptionHandler> exceptionHandlers;
-		Dictionary<Instruction, int> instrToIndex;
+		Dictionary<Instruction, int> instrToIndex = null!;
 		Dictionary<int, List<int>> branches;	// key = dest index, value = instrs branching to dest
 
 		public InstructionListParser(IList<Instruction> instructions, IList<ExceptionHandler> exceptionHandlers) {
@@ -73,7 +73,7 @@ namespace de4dot.blocks {
 			for (int i = 0; i < instructions.Count; i++) {
 				var instr = instructions[i];
 
-				List<int> targets = null;
+				List<int>? targets = null;
 				switch (instr.OpCode.OperandType) {
 				case OperandType.ShortInlineBrTarget:
 				case OperandType.InlineBrTarget:
@@ -119,7 +119,7 @@ namespace de4dot.blocks {
 		}
 
 		void FindBlocks(List<Block> instrToBlock, List<Block> allBlocks) {
-			Block block = null;
+			Block? block = null;
 			for (var i = 0; i < instructions.Count; i++) {
 				if (branches.TryGetValue(i, out var branchSources) || block == null) {
 					block = new Block();
@@ -182,7 +182,7 @@ namespace de4dot.blocks {
 				return res;
 			}
 
-			public override bool Equals(object obj) {
+			public override bool Equals(object? obj) {
 				var other = obj as EHInfo;
 				if (other == null)
 					return false;

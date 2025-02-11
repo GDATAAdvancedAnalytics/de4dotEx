@@ -18,6 +18,7 @@
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
@@ -26,8 +27,8 @@ namespace de4dot.blocks.cflow {
 		// We can't catch all infinite loops, so inline methods at most this many times
 		const int MAX_ITERATIONS = 10;
 
-		protected Blocks blocks;
-		protected Block block;
+		protected Blocks? blocks;
+		protected Block? block;
 		int iteration;
 		AccessChecker accessChecker;
 
@@ -68,6 +69,7 @@ namespace de4dot.blocks.cflow {
 		}
 
 		protected bool InlineLoadMethod(int patchIndex, MethodDef methodToInline, Instruction loadInstr, int instrIndex) {
+			Debug.Assert(block != null);
 			if (!IsReturn(methodToInline, instrIndex))
 				return false;
 
@@ -85,7 +87,8 @@ namespace de4dot.blocks.cflow {
 		protected bool InlineOtherMethod(int patchIndex, MethodDef methodToInline, Instruction instr, int instrIndex, int popLastArgs) =>
 			PatchMethod(methodToInline, TryInlineOtherMethod(patchIndex, methodToInline, instr, instrIndex, popLastArgs));
 
-		protected bool PatchMethod(MethodDef methodToInline, InstructionPatcher patcher) {
+		protected bool PatchMethod(MethodDef methodToInline, InstructionPatcher? patcher) {
+			Debug.Assert(block != null);
 			if (patcher == null)
 				return false;
 
@@ -96,12 +99,12 @@ namespace de4dot.blocks.cflow {
 			return true;
 		}
 
-		protected InstructionPatcher TryInlineOtherMethod(int patchIndex, MethodDef methodToInline, Instruction instr, int instrIndex) =>
+		protected InstructionPatcher? TryInlineOtherMethod(int patchIndex, MethodDef methodToInline, Instruction instr, int instrIndex) =>
 			TryInlineOtherMethod(patchIndex, methodToInline, instr, instrIndex, 0);
 
-		protected virtual Instruction OnAfterLoadArg(MethodDef methodToInline, Instruction instr, ref int instrIndex) => instr;
+		protected virtual Instruction? OnAfterLoadArg(MethodDef methodToInline, Instruction? instr, ref int instrIndex) => instr;
 
-		protected InstructionPatcher TryInlineOtherMethod(int patchIndex, MethodDef methodToInline, Instruction instr, int instrIndex, int popLastArgs) {
+		protected InstructionPatcher? TryInlineOtherMethod(int patchIndex, MethodDef methodToInline, Instruction? instr, int instrIndex, int popLastArgs) {
 			int loadIndex = 0;
 			int methodArgsCount = DotNetUtils.GetArgsCount(methodToInline);
 			bool foundLdarga = false;
@@ -206,9 +209,10 @@ namespace de4dot.blocks.cflow {
 			}
 		}
 
-		bool HasAccessTo(object operand) {
+		bool HasAccessTo(object? operand) {
 			if (operand == null)
 				return false;
+			Debug.Assert(blocks != null);
 			accessChecker.UserType = blocks.Method.DeclaringType;
 			return accessChecker.CanAccess(operand) ?? GetDefaultAccessResult();
 		}

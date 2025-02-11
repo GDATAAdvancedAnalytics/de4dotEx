@@ -604,7 +604,11 @@ namespace de4dot.mdecrypt {
 			return true;
 		}
 
+#if NET6_0_OR_GREATER
+		[SecurityCritical]
+#else
 		[HandleProcessCorruptedStateExceptions, SecurityCritical]	// Req'd on .NET 4.0
+#endif
 		static unsafe bool PatchRT(IntPtr baseAddr) {
 			foreach (var info in patches) {
 				try {
@@ -641,7 +645,11 @@ namespace de4dot.mdecrypt {
 			return true;
 		}
 
+#if NET6_0_OR_GREATER
+		[SecurityCritical]
+#else
 		[HandleProcessCorruptedStateExceptions, SecurityCritical]	// Req'd on .NET 4.0
+#endif
 		static unsafe IntPtr FindCMAddress(PEImage peImage, IntPtr baseAddr, IntPtr origValue) {
 			int offset = Environment.Version.Major == 2 ? 0x10 : 0x28;
 

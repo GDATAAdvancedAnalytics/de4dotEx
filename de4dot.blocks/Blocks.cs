@@ -19,14 +19,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks {
 	public class Blocks {
 		MethodDef method;
-		IList<Local> locals;
-		MethodBlocks methodBlocks;
+		IList<Local> locals = null!;
+		MethodBlocks methodBlocks = null!;
 
 		public MethodBlocks MethodBlocks => methodBlocks;
 		public IList<Local> Locals => locals;
@@ -72,7 +73,7 @@ namespace de4dot.blocks {
 			foreach (var block in methodBlocks.GetAllBlocks()) {
 				for (int i = 0; i < block.Instructions.Count; i++) {
 					var instr = block.Instructions[i];
-					Local local;
+					Local? local;
 					switch (instr.OpCode.Code) {
 					case Code.Ldloc:
 					case Code.Ldloc_S:
@@ -229,7 +230,7 @@ namespace de4dot.blocks {
 				bool modified = false;
 
 				foreach (var block in allBlocks) {
-					Block nopBlockTarget;
+					Block? nopBlockTarget;
 
 					nopBlockTarget = GetNopBlockTarget(nopBlocks, block, block.FallThrough);
 					if (nopBlockTarget != null) {
@@ -252,15 +253,19 @@ namespace de4dot.blocks {
 					break;
 			}
 
-			foreach (var nopBlock in nopBlocks.Keys)
+			foreach (var nopBlock in nopBlocks.Keys) {
+				Debug.Assert(nopBlock.Parent != null);
 				nopBlock.Parent.RemoveDeadBlock(nopBlock);
+			}
 		}
 
-		static Block GetNopBlockTarget(Dictionary<Block, bool> nopBlocks, Block source, Block nopBlock) {
+		static Block? GetNopBlockTarget(Dictionary<Block, bool> nopBlocks, Block source, Block? nopBlock) {
 			if (nopBlock == null || !nopBlocks.ContainsKey(nopBlock) || source == nopBlock.FallThrough)
 				return null;
+			Debug.Assert(nopBlock.Parent?.BaseBlocks != null);
 			if (nopBlock.Parent.BaseBlocks[0] == nopBlock)
 				return null;
+			Debug.Assert(nopBlock.FallThrough != null);
 			var target = nopBlock.FallThrough;
 			if (nopBlock.Parent != target.Parent)
 				return null;

@@ -19,15 +19,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks {
 	// A normal branch may not transfer out of a protected block (try block), filter handler,
 	// an exception handler block, or a method.
 	public abstract class ScopeBlock : BaseBlock {
-		protected List<BaseBlock> baseBlocks;
+		protected List<BaseBlock>? baseBlocks;
 
-		public List<BaseBlock> BaseBlocks {
+		public List<BaseBlock>? BaseBlocks {
 			get => baseBlocks;
 			set => baseBlocks = value;
 		}
@@ -65,7 +67,7 @@ namespace de4dot.blocks {
 
 		List<Block> FindBlocks() => FindBlocks(null);
 
-		List<Block> FindBlocks(Func<Block, bool> blockChecker) {
+		List<Block> FindBlocks(Func<Block, bool>? blockChecker) {
 			var blocks = new List<Block>();
 			foreach (var bb in GetBaseBlocks()) {
 				if (bb is Block block && (blockChecker == null || blockChecker(block)))
@@ -100,6 +102,7 @@ namespace de4dot.blocks {
 		// Remove the blocks if they're dead blocks. If they have refs to other dead blocks,
 		// those are also removed.
 		public void RemoveDeadBlocks(List<Block> blocks) {
+			Debug.Assert(baseBlocks != null);
 			while (blocks.Count != 0) {
 				var block = blocks[blocks.Count - 1];
 				blocks.RemoveAt(blocks.Count - 1);
@@ -122,11 +125,12 @@ namespace de4dot.blocks {
 			}
 		}
 
-		public bool IsOurBaseBlock(BaseBlock bb) => bb != null && bb.Parent == this;
+		public bool IsOurBaseBlock(BaseBlock? bb) => bb != null && bb.Parent == this;
 
 		// For each block, if it has only one target, and the target has only one source, then
 		// merge them into one block.
 		public int MergeBlocks() {
+			Debug.Assert(baseBlocks != null);
 			int mergedBlocks = 0;
 			var blocks = FindBlocks();
 			for (int i = 0; i < blocks.Count; i++) {
@@ -157,7 +161,8 @@ namespace de4dot.blocks {
 
 		// If bb is in baseBlocks (a direct child), return bb. If bb is a BaseBlock in a
 		// ScopeBlock that is a direct child, then return that ScopeBlock. Else return null.
-		public BaseBlock ToChild(BaseBlock bb) {
+		public BaseBlock? ToChild(BaseBlock? bb) {
+			Debug.Assert(bb != null);
 			if (IsOurBaseBlock(bb))
 				return bb;
 
@@ -170,6 +175,7 @@ namespace de4dot.blocks {
 		}
 
 		internal void RepartitionBlocks() {
+			Debug.Assert(baseBlocks != null);
 			var newBaseBlocks = new BlocksSorter(this).Sort();
 
 			const bool insane = true;
@@ -190,10 +196,12 @@ namespace de4dot.blocks {
 		// Removes the TryBlock and all its TryHandlerBlocks. The code inside the try block
 		// is not removed.
 		public void RemoveTryBlock(TryBlock tryBlock) {
+			Debug.Assert(baseBlocks != null);
 			int tryBlockIndex = baseBlocks.IndexOf(tryBlock);
 			if (tryBlockIndex < 0)
 				throw new ApplicationException("Can't remove the TryBlock since it's not this ScopeBlock's TryBlock");
 
+			Debug.Assert(tryBlock.BaseBlocks != null);
 			foreach (var bb in tryBlock.BaseBlocks)
 				bb.Parent = this;
 			baseBlocks.RemoveAt(tryBlockIndex);
@@ -229,15 +237,16 @@ namespace de4dot.blocks {
 
 		// Remove all blocks in deadBlocks. They're guaranteed to be dead. deadBlocksDict is
 		// a dictionary of all dead blocks (even those not in this ScopeBlock).
-		internal void RemoveAllDeadBlocks(IEnumerable<BaseBlock> deadBlocks, Dictionary<BaseBlock, bool> deadBlocksDict) {
+		internal void RemoveAllDeadBlocks(IEnumerable<BaseBlock> deadBlocks, Dictionary<BaseBlock, bool>? deadBlocksDict) {
+			Debug.Assert(baseBlocks != null);
 
 			// Verify that all the blocks really are dead. If all their source blocks are
 			// dead, then they are dead.
 
 			var allDeadBlocks = new List<Block>();
 			foreach (var bb in deadBlocks) {
-				if (bb is Block)
-					allDeadBlocks.Add(bb as Block);
+				if (bb is Block block)
+					allDeadBlocks.Add(block);
 				else if (bb is ScopeBlock sb)
 					allDeadBlocks.AddRange(sb.GetAllBlocks());
 				else
@@ -264,12 +273,14 @@ namespace de4dot.blocks {
 		}
 
 		public void RemoveGuaranteedDeadBlock(Block block) {
+			Debug.Assert(baseBlocks != null);
 			if (!baseBlocks.Remove(block))
 				throw new ApplicationException("Could not remove dead block");
 			block.RemoveGuaranteedDeadBlock();
 		}
 
 		public void Add(Block block) {
+			Debug.Assert(baseBlocks != null);
 			if (block.Parent != null)
 				throw new ApplicationException("Block already has a parent");
 			baseBlocks.Add(block);

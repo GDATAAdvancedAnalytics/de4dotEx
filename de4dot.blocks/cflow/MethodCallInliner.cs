@@ -18,6 +18,7 @@
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
@@ -28,6 +29,7 @@ namespace de4dot.blocks.cflow {
 		public MethodCallInliner(bool inlineInstanceMethods) => this.inlineInstanceMethods = inlineInstanceMethods;
 
 		protected override bool DeobfuscateInternal() {
+			Debug.Assert(block != null);
 			bool modified = false;
 			var instructions = block.Instructions;
 			for (int i = 0; i < instructions.Count; i++) {
@@ -41,6 +43,7 @@ namespace de4dot.blocks.cflow {
 		protected virtual bool CanInline(MethodDef method) {
 			if (method.GenericParameters.Count > 0)
 				return false;
+			Debug.Assert(blocks != null);
 			if (method == blocks.Method)
 				return false;
 			if (!new SigComparer().Equals(method.DeclaringType, blocks.Method.DeclaringType))
@@ -53,7 +56,7 @@ namespace de4dot.blocks.cflow {
 			return inlineInstanceMethods;
 		}
 
-		protected virtual Instruction GetFirstInstruction(IList<Instruction> instrs, ref int index) =>
+		protected virtual Instruction? GetFirstInstruction(IList<Instruction> instrs, ref int index) =>
 			DotNetUtils.GetInstruction(instrs, ref index);
 
 		bool InlineMethod(Instruction callInstr, int instrIndex) {

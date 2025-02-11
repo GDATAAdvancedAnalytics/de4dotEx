@@ -18,11 +18,12 @@
 */
 
 using System;
+using System.Diagnostics;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
 	class BlockCflowDeobfuscator : BlockDeobfuscator, IBranchHandler {
-		Block block;
+		Block? block;
 		InstructionEmulator instructionEmulator;
 		BranchEmulator branchEmulator;
 
@@ -33,6 +34,8 @@ namespace de4dot.blocks.cflow {
 
 		protected override bool Deobfuscate(Block block) {
 			this.block = block;
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			if (!block.LastInstr.IsConditionalBranch() && block.LastInstr.OpCode.Code != Code.Switch)
 				return false;
 			instructionEmulator.Initialize(blocks, allBlocks[0] == block);
@@ -55,6 +58,7 @@ namespace de4dot.blocks.cflow {
 		}
 
 		void PopPushedArgs(int stackArgs) {
+			Debug.Assert(block != null);
 			// Pop the arguments to the bcc instruction. The dead code remover will get rid of the
 			// pop and any pushed arguments. Insert the pops just before the bcc instr.
 			for (int i = 0; i < stackArgs; i++)
@@ -62,11 +66,13 @@ namespace de4dot.blocks.cflow {
 		}
 
 		void IBranchHandler.HandleNormal(int stackArgs, bool isTaken) {
+			Debug.Assert(block != null);
 			PopPushedArgs(stackArgs);
 			block.ReplaceBccWithBranch(isTaken);
 		}
 
 		bool IBranchHandler.HandleSwitch(Int32Value switchIndex) {
+			Debug.Assert(block != null);
 			var target = CflowUtils.GetSwitchTarget(block.Targets, block.FallThrough, switchIndex);
 			if (target == null)
 				return false;

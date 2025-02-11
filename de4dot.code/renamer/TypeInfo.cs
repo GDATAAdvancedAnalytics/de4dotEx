@@ -78,7 +78,7 @@ namespace de4dot.code.renamer {
 					newNamespace = "";
 				Rename("<Module>");
 			}
-			else if (!checker.IsValidTypeName(oldName)) {
+			else if (!checker.IsValidTypeName(oldName) && !renamed) {
 				if (origClassName != null && checker.IsValidTypeName(origClassName))
 					Rename(state.GetTypeName(oldName, origClassName));
 				else {
@@ -126,6 +126,7 @@ namespace de4dot.code.renamer {
 			if (IsWinFormsClass())
 				InitializeWindowsFormsFieldsAndProps();
 
+			InitializeConstructorFields();
 			PrepareRenameFields();
 		}
 
@@ -417,6 +418,71 @@ namespace de4dot.code.renamer {
 					} while (usedNames.ContainsKey(newName));
 					usedNames[newName] = true;
 					gpInfo.Rename(newName);
+				}
+			}
+		}
+
+		void InitializeConstructorFields() {
+			var checker = NameChecker;
+			var ourFields = new FieldDefAndDeclaringTypeDict<MFieldDef>();
+			foreach (var fieldDef in type.AllFields)
+				ourFields.Add(fieldDef.FieldDef, fieldDef);
+
+			foreach (var methodDef in type.AllMethods) {
+				if (methodDef.MethodDef.Body == null)
+					continue;
+				if (!methodDef.MethodDef.IsConstructor)
+					continue;
+				if (methodDef.MethodDef.IsStatic)
+					continue;
+				var instructions = methodDef.MethodDef.Body.Instructions;
+				for (int i = 0; i < instructions.Count; i++) {
+					var loadThis = instructions[i];
+					if (loadThis.OpCode.Code != Code.Ldarg_0)
+						continue;
+
+					var loadArg = instructions[i + 1];
+					int paramIndex;
+					if (loadArg.OpCode.Code == Code.Ldarg_1)
+					{
+						paramIndex = 1;
+					}
+					else if (loadArg.OpCode.Code == Code.Ldarg_2)
+					{
+						paramIndex = 2;
+					}
+					else if (loadArg.OpCode.Code == Code.Ldarg_3)
+					{
+						paramIndex = 3;
+					}
+					else if (loadArg.OpCode.Code == Code.Ldarg_S)
+					{
+						paramIndex = ((IVariable)loadArg.Operand).Index;
+					}
+					else
+						continue;
+
+					var storeField = instructions[i + 2];
+					if (storeField.OpCode.Code != Code.Stfld)
+						continue;
+
+					var fieldRef = storeField.Operand as IField;
+					if (fieldRef == null)
+						continue;
+					if (checker.IsValidFieldName(fieldRef.Name))
+						continue;
+					var fieldDef = ourFields.Find(fieldRef);
+					if (fieldDef == null)
+						continue;
+					var fieldInfo = memberInfos.Field(fieldDef);
+					if (fieldInfo.renamed)
+						continue;
+
+					var paramInfo = memberInfos.Param(methodDef.ParamDefs[paramIndex]);
+					var parameterName = paramInfo.newName;
+					if (!checker.IsValidFieldName(parameterName))
+						continue;
+					fieldInfo.suggestedName = parameterName;
 				}
 			}
 		}

@@ -54,9 +54,9 @@ namespace de4dot.blocks.cflow {
 	}
 
 	public class ObjectValue : Value {
-		public readonly object obj;	// can be null but that doesn't mean that this ObjectValue instance is null
+		public readonly object? obj;	// can be null but that doesn't mean that this ObjectValue instance is null
 		public ObjectValue() : this(null) { }
-		public ObjectValue(object obj) : base(ValueType.Object) => this.obj = obj;
+		public ObjectValue(object? obj) : base(ValueType.Object) => this.obj = obj;
 		public override string ToString() => "<non-null object>";
 	}
 

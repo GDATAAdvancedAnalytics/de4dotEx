@@ -19,6 +19,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks {
@@ -44,20 +46,20 @@ namespace de4dot.blocks {
 
 		// List of all explicit (non-fall-through) targets. It's just one if it's a normal
 		// branch, but if it's a switch, it could be many targets.
-		List<Block> targets;
+		List<Block>? targets;
 
 		// This is the fall through Block (non branch instructions)
-		Block fallThrough;
+		Block? fallThrough;
 
 		// All blocks that fall through or branches to this block
 		List<Block> sources = new List<Block>();
 
-		public Block FallThrough {
+		public Block? FallThrough {
 			get => fallThrough;
 			set => fallThrough = value;
 		}
 
-		public List<Block> Targets {
+		public List<Block>? Targets {
 			get => targets;
 			set => targets = value;
 		}
@@ -92,6 +94,7 @@ namespace de4dot.blocks {
 
 			if (fallThrough != null || (LastInstr.Operand != null && (targets == null || targets.Count != 1)))
 				throw new ApplicationException("Invalid block state when last instr is a br/br.s");
+			Debug.Assert(targets != null);
 			fallThrough = LastInstr.Operand != null ? targets[0] : null;
 			targets = null;
 			instructions.RemoveAt(instructions.Count - 1);
@@ -121,7 +124,7 @@ namespace de4dot.blocks {
 		}
 
 		// Replace the last instructions with a branch to target
-		public void ReplaceLastInstrsWithBranch(int numInstrs, Block target) {
+		public void ReplaceLastInstrsWithBranch(int numInstrs, Block? target) {
 			if (numInstrs < 0 || numInstrs > instructions.Count)
 				throw new ApplicationException("Invalid numInstrs to replace with branch");
 			if (target == null)
@@ -140,7 +143,10 @@ namespace de4dot.blocks {
 			ReplaceLastInstrsWithBranch(numInstrs, target);
 		}
 
-		public void ReplaceBccWithBranch(bool isTaken) => ReplaceLastInstrsWithBranch(1, isTaken ? targets[0] : fallThrough);
+		public void ReplaceBccWithBranch(bool isTaken) {
+			Debug.Assert(targets != null);
+			ReplaceLastInstrsWithBranch(1, isTaken ? targets[0] : fallThrough);
+		}
 
 		public void ReplaceSwitchWithBranch(Block target) {
 			if (LastInstr.OpCode.Code != Code.Switch)
@@ -155,6 +161,7 @@ namespace de4dot.blocks {
 		}
 
 		public void SetNewTarget(int index, Block newTarget) {
+			Debug.Assert(targets != null);
 			DisconnectFromBlock(targets[index]);
 			targets[index] = newTarget;
 			newTarget.sources.Add(this);
@@ -206,11 +213,12 @@ namespace de4dot.blocks {
 		}
 
 		// Returns the target iff it has only ONE target. Else it returns null.
-		public Block GetOnlyTarget() {
+		public Block? GetOnlyTarget() {
 			if (CountTargets() != 1)
 				return null;
 			if (fallThrough != null)
 				return fallThrough;
+			Debug.Assert(targets != null);
 			return targets[0];
 		}
 
@@ -228,10 +236,14 @@ namespace de4dot.blocks {
 		public bool IsOnlySource(Block other) => sources.Count == 1 && sources[0] == other;
 
 		// Returns true if we can merge other with this
-		public bool CanMerge(Block other) => CanAppend(other) && other.IsOnlySource(this);
+		public bool CanMerge(
+#if NET6_0_OR_GREATER
+			[NotNullWhen(true)]
+#endif
+			Block? other) => CanAppend(other) && other.IsOnlySource(this);
 
 		// Merge two blocks into one
-		public void Merge(Block other) {
+		public void Merge(Block? other) {
 			if (!CanMerge(other))
 				throw new ApplicationException("Can't merge the two blocks!");
 			Append(other);
@@ -239,14 +251,18 @@ namespace de4dot.blocks {
 			other.Parent = null;
 		}
 
-		public bool CanAppend(Block other) {
+		public bool CanAppend(
+#if NET6_0_OR_GREATER
+			[NotNullWhen(true)]
+#endif
+			Block? other) {
 			if (other == null || other == this || GetOnlyTarget() != other)
 				return false;
 			// If it's eg. a leave, then don't merge them since it clears the stack.
 			return LastInstr.IsBr() || Instr.IsFallThrough(LastInstr.OpCode);
-		}
+		}	
 
-		public void Append(Block other) {
+		public void Append(Block? other) {
 			if (!CanAppend(other))
 				throw new ApplicationException("Can't append the block!");
 

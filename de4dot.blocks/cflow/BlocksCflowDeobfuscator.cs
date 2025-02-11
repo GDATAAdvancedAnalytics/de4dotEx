@@ -18,11 +18,13 @@
 */
 
 using System.Collections.Generic;
+using System.Diagnostics;
+using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
 	public class BlocksCflowDeobfuscator {
-		Blocks blocks;
+		Blocks? blocks;
 		List<Block> allBlocks = new List<Block>();
 		List<IBlocksDeobfuscator> userBlocksDeobfuscators = new List<IBlocksDeobfuscator>();
 		List<IBlocksDeobfuscator> ourBlocksDeobfuscators = new List<IBlocksDeobfuscator>();
@@ -65,6 +67,7 @@ namespace de4dot.blocks.cflow {
 		public void Initialize(Blocks blocks) => this.blocks = blocks;
 
 		public void Deobfuscate() {
+			Debug.Assert(blocks != null);
 			bool modified;
 			int iterations = -1;
 
@@ -90,6 +93,7 @@ namespace de4dot.blocks.cflow {
 		}
 
 		void DeobfuscateBegin(IEnumerable<IBlocksDeobfuscator> bds) {
+			Debug.Assert(blocks != null);
 			foreach (var bd in bds)
 				bd.DeobfuscateBegin(blocks);
 		}
@@ -155,6 +159,7 @@ namespace de4dot.blocks.cflow {
 				if (prev == null || !prev.LastInstr.IsLdcI4())
 					continue;
 				var next = block.FallThrough;
+				Debug.Assert(next != null);
 				if (next.FirstInstr.OpCode.Code != Code.Pop)
 					continue;
 				block.ReplaceLastInstrsWithBranch(5, next);
@@ -163,9 +168,13 @@ namespace de4dot.blocks.cflow {
 			return modified;
 		}
 
-		bool RemoveDeadBlocks() => new DeadBlocksRemover(blocks.MethodBlocks).Remove() > 0;
+		bool RemoveDeadBlocks() {
+			Debug.Assert(blocks != null);
+			return new DeadBlocksRemover(blocks.MethodBlocks).Remove() > 0;
+		}
 
 		bool MergeBlocks() {
+			Debug.Assert(blocks != null);
 			bool modified = false;
 			foreach (var scopeBlock in GetAllScopeBlocks(blocks.MethodBlocks))
 				modified |= scopeBlock.MergeBlocks() > 0;

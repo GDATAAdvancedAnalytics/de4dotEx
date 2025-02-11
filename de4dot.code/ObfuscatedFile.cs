@@ -325,7 +325,44 @@ namespace de4dot.code {
 			return list;
 		}
 
+		private Dictionary<string, MethodDef> inlineCandidate;
 		public void DeobfuscateBegin() {
+			inlineCandidate = new();
+			foreach (var m in GetAllMethods().Where(_ => _.HasBody && _.Body.HasInstructions)) {
+				if (m.IsStatic && m.Parameters.Count + 2 == m.Body.Instructions.Count) {
+					var callInstruction = m.Body.Instructions[m.Parameters.Count];
+					if (callInstruction.OpCode == OpCodes.Call || callInstruction.OpCode == OpCodes.Callvirt || callInstruction.OpCode == OpCodes.Newobj) {
+						bool isValidInlineTarget = true;
+						for (int i = 0; i < m.Parameters.Count; i++) {
+							var ldarg = m.Body.Instructions[i];
+							if ((i == 0 && ldarg.OpCode != OpCodes.Ldarg_0)) {
+								isValidInlineTarget = false;
+								break;
+							}
+							if ((i == 1 && ldarg.OpCode != OpCodes.Ldarg_1)) {
+								isValidInlineTarget = false;
+								break;
+							}
+							if ((i == 2 && ldarg.OpCode != OpCodes.Ldarg_2)) {
+								isValidInlineTarget = false;
+								break;
+							}
+							if ((i == 3 && ldarg.OpCode != OpCodes.Ldarg_3)) {
+								isValidInlineTarget = false;
+								break;
+							}
+							if (i > 3 && !((ldarg.OpCode == OpCodes.Ldarg && i == (int)ldarg.Operand) || (ldarg.OpCode == OpCodes.Ldarg_S && i == ((dnlib.DotNet.Parameter)ldarg.Operand).Index))) {
+								isValidInlineTarget = false;
+								break;
+							}
+						}
+
+						if (isValidInlineTarget) {
+							inlineCandidate.Add(m.FullName, m);
+						}
+					}					
+				}
+			}
 			switch (options.StringDecrypterType) {
 			case DecrypterType.None:
 				CheckSupportedStringDecrypter(StringFeatures.AllowNoDecryption);
@@ -519,7 +556,13 @@ namespace de4dot.code {
 				name = null;
 		}
 
-		public void DeobfuscateEnd() => DeobfuscateCleanUp();
+		public void DeobfuscateEnd() {
+			foreach (var m in inlineCandidate) {
+				m.Value.DeclaringType.Remove(m.Value);
+			}
+
+			DeobfuscateCleanUp();
+		}
 
 		public void DeobfuscateCleanUp() {
 			if (assemblyClient != null) {
@@ -598,6 +641,23 @@ namespace de4dot.code {
 		void Deobfuscate(MethodDef method, BlocksCflowDeobfuscator cflowDeobfuscator, MethodPrinter methodPrinter, bool isVerbose, bool isVV) {
 			if (!HasNonEmptyBody(method))
 				return;
+
+			var rewritten = false;
+			for (var i = 0; i < method.Body.Instructions.Count; i++) {
+				var instr = method.Body.Instructions[i];
+				if (instr.OpCode == OpCodes.Call) {
+					var targetMethod = (IMethod?)instr.Operand;
+					if (targetMethod is null) continue;
+					if (inlineCandidate.TryGetValue(targetMethod.ResolveMethodDef()?.FullName ?? targetMethod.FullName, out var methodToInline)) {
+						instr.Operand = methodToInline.Body.Instructions[methodToInline.Parameters.Count].Operand;
+						rewritten = true;
+					}
+				}
+			}
+
+			if (rewritten) {	
+				method.Body.KeepOldMaxStack = true;
+			}
 
 			var blocks = new Blocks(method);
 

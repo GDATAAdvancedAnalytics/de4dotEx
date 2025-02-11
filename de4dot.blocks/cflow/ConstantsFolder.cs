@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
@@ -26,16 +27,19 @@ namespace de4dot.blocks.cflow {
 	// Very simple constants folder which is all that's needed at the moment
 	class ConstantsFolder : BlockDeobfuscator {
 		InstructionEmulator instructionEmulator = new InstructionEmulator();
-		IList<Parameter> args;
+		IList<Parameter> args = null!;
 
 		public bool DisableNewCode { get; set; }
 
 		protected override void Initialize(List<Block> allBlocks) {
 			base.Initialize(allBlocks);
+			Debug.Assert(blocks != null);
 			args = blocks.Method.Parameters;
 		}
 
 		protected override bool Deobfuscate(Block block) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			bool modified = false;
 
 			instructionEmulator.Initialize(blocks, allBlocks[0] == block);
@@ -140,7 +144,7 @@ namespace de4dot.blocks.cflow {
 						break;
 					instructionEmulator.Emulate(instr.Instruction);
 					var tos = instructionEmulator.Peek();
-					Instruction newInstr = null;
+					Instruction? newInstr = null;
 					if (tos.IsInt32()) {
 						var val = (Int32Value)tos;
 						if (val.AllBitsValid())

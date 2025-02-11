@@ -22,17 +22,17 @@ using dnlib.DotNet;
 
 namespace de4dot.blocks {
 	public struct GenericArgsSubstitutor {
-		IList<TypeSig> genericArgs;
-		IList<TypeSig> genericMethodArgs;
+		IList<TypeSig>? genericArgs;
+		IList<TypeSig>? genericMethodArgs;
 		bool updated;
 
-		public static ITypeDefOrRef Create(ITypeDefOrRef type, GenericInstSig git) {
+		public static ITypeDefOrRef Create(ITypeDefOrRef type, GenericInstSig? git) {
 			if (git == null)
 				return type;
 			return Create(type, git.GenericArguments);
 		}
 
-		public static ITypeDefOrRef Create(ITypeDefOrRef type, IList<TypeSig> genericArgs) {
+		public static ITypeDefOrRef Create(ITypeDefOrRef type, IList<TypeSig>? genericArgs) {
 			if (genericArgs == null || genericArgs.Count == 0)
 				return type;
 			var ts = type as TypeSpec;
@@ -42,26 +42,26 @@ namespace de4dot.blocks {
 			return newSig == ts.TypeSig ? type : new TypeSpecUser(newSig);
 		}
 
-		public static TypeSig Create(TypeSig type, IList<TypeSig> genericArgs) {
+		public static TypeSig? Create(TypeSig? type, IList<TypeSig>? genericArgs) {
 			if (type == null || genericArgs == null || genericArgs.Count == 0)
 				return type;
 			return new GenericArgsSubstitutor(genericArgs).Create(type);
 		}
 
-		public static TypeSig Create(TypeSig type, IList<TypeSig> genericArgs, IList<TypeSig> genericMethodArgs) {
+		public static TypeSig? Create(TypeSig? type, IList<TypeSig>? genericArgs, IList<TypeSig>? genericMethodArgs) {
 			if (type == null || ((genericArgs == null || genericArgs.Count == 0) &&
 				(genericMethodArgs == null || genericMethodArgs.Count == 0)))
 				return type;
 			return new GenericArgsSubstitutor(genericArgs, genericMethodArgs).Create(type);
 		}
 
-		public static IField Create(IField field, GenericInstSig git) {
+		public static IField? Create(IField? field, GenericInstSig git) {
 			if (git == null)
 				return field;
 			return Create(field, git.GenericArguments);
 		}
 
-		public static IField Create(IField field, IList<TypeSig> genericArgs) {
+		public static IField? Create(IField? field, IList<TypeSig>? genericArgs) {
 			if (field == null || genericArgs == null || genericArgs.Count == 0)
 				return field;
 			var newSig = Create(field.FieldSig, genericArgs);
@@ -71,19 +71,19 @@ namespace de4dot.blocks {
 			return new MemberRefUser(module, field.Name, newSig, field.DeclaringType);
 		}
 
-		public static FieldSig Create(FieldSig sig, GenericInstSig git) {
+		public static FieldSig? Create(FieldSig sig, GenericInstSig? git) {
 			if (git == null)
 				return sig;
 			return Create(sig, git.GenericArguments);
 		}
 
-		public static FieldSig Create(FieldSig sig, IList<TypeSig> genericArgs) {
+		public static FieldSig? Create(FieldSig? sig, IList<TypeSig>? genericArgs) {
 			if (sig == null || genericArgs == null || genericArgs.Count == 0)
 				return sig;
 			return new GenericArgsSubstitutor(genericArgs).Create(sig);
 		}
 
-		public static IMethod Create(IMethod method, GenericInstSig git) {
+		public static IMethod? Create(IMethod method, GenericInstSig? git) {
 			if (git == null)
 				return method;
 
@@ -96,7 +96,7 @@ namespace de4dot.blocks {
 			return method;
 		}
 
-		public static MethodSpec Create(MethodSpec method, GenericInstSig git) {
+		public static MethodSpec? Create(MethodSpec? method, GenericInstSig? git) {
 			if (method == null || git == null)
 				return method;
 			var newMethod = Create(method.Method, git);
@@ -105,32 +105,32 @@ namespace de4dot.blocks {
 			return updated ? new MethodSpecUser(newMethod, newInst) : method;
 		}
 
-		public static GenericInstMethodSig Create(GenericInstMethodSig sig, GenericInstSig git) {
+		public static GenericInstMethodSig? Create(GenericInstMethodSig sig, GenericInstSig? git) {
 			if (git == null)
 				return sig;
 			return Create(sig, git.GenericArguments);
 		}
 
-		public static GenericInstMethodSig Create(GenericInstMethodSig sig, IList<TypeSig> genericArgs) {
+		public static GenericInstMethodSig? Create(GenericInstMethodSig? sig, IList<TypeSig>? genericArgs) {
 			if (sig == null || genericArgs == null || genericArgs.Count == 0)
 				return sig;
 			return new GenericArgsSubstitutor(genericArgs).Create(sig);
 		}
 
-		public static IMethodDefOrRef Create(IMethodDefOrRef method, GenericInstSig git) {
+		public static IMethodDefOrRef? Create(IMethodDefOrRef method, GenericInstSig? git) {
 			if (git == null)
 				return method;
 			return Create(method, git.GenericArguments);
 		}
 
-		public static IMethodDefOrRef Create(IMethodDefOrRef method, IList<TypeSig> genericArgs) =>
+		public static IMethodDefOrRef? Create(IMethodDefOrRef method, IList<TypeSig> genericArgs) =>
 			Create(method, genericArgs, null);
 
-		public static IMethodDefOrRef Create(IMethodDefOrRef method, GenericInstSig git, IList<TypeSig> genericMethodArgs) =>
+		public static IMethodDefOrRef? Create(IMethodDefOrRef method, GenericInstSig? git, IList<TypeSig> genericMethodArgs) =>
 			Create(method, git?.GenericArguments, genericMethodArgs);
 
 		// Creates a new method but keeps declaring type as is
-		public static IMethodDefOrRef Create(IMethodDefOrRef method, IList<TypeSig> genericArgs, IList<TypeSig> genericMethodArgs) {
+		public static IMethodDefOrRef? Create(IMethodDefOrRef? method, IList<TypeSig>? genericArgs, IList<TypeSig>? genericMethodArgs) {
 			if (method == null)
 				return method;
 			if ((genericArgs == null || genericArgs.Count == 0) && (genericMethodArgs == null || genericMethodArgs.Count == 0))
@@ -153,18 +153,18 @@ namespace de4dot.blocks {
 			updated = false;
 		}
 
-		GenericArgsSubstitutor(IList<TypeSig> genericArgs, IList<TypeSig> genericMethodArgs) {
+		GenericArgsSubstitutor(IList<TypeSig>? genericArgs, IList<TypeSig>? genericMethodArgs) {
 			this.genericArgs = genericArgs;
 			this.genericMethodArgs = genericMethodArgs;
 			updated = false;
 		}
 
-		TypeSig Create(TypeSig type) {
+		TypeSig? Create(TypeSig type) {
 			var newType = Create2(type);
 			return updated ? newType : type;
 		}
 
-		TypeSig Create2(TypeSig type) {
+		TypeSig? Create2(TypeSig type) {
 			if (type == null)
 				return type;
 			TypeSig result;
@@ -278,7 +278,7 @@ namespace de4dot.blocks {
 			return result;
 		}
 
-		MethodSig Create(MethodSig sig) {
+		MethodSig? Create(MethodSig? sig) {
 			if (sig == null)
 				return sig;
 			var newSig = new MethodSig(sig.GetCallingConvention());

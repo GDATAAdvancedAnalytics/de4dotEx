@@ -36,7 +36,7 @@ namespace de4dot.blocks {
 
 		public uint token;				// metadata token
 
-		public byte[] code;
-		public byte[] extraSections;
+		public byte[]? code;
+		public byte[]? extraSections;
 	}
 }

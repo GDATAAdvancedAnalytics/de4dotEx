@@ -55,7 +55,7 @@ namespace de4dot.blocks {
 			throw new ApplicationException(msg);
 		}
 
-		static FieldInfo GetField(Type type, Type fieldType, BindingFlags flags) {
+		static FieldInfo? GetField(Type type, Type fieldType, BindingFlags flags) {
 			foreach (var field in type.GetFields(flags)) {
 				if (field.FieldType == fieldType)
 					return field;
@@ -70,7 +70,7 @@ namespace de4dot.blocks {
 			throw new ApplicationException(msg);
 		}
 
-		static FieldInfo GetField(Type type, string fieldName, BindingFlags flags) {
+		static FieldInfo? GetField(Type type, string fieldName, BindingFlags flags) {
 			foreach (var field in type.GetFields(flags)) {
 				if (field.Name == fieldName)
 					return field;
@@ -79,8 +79,8 @@ namespace de4dot.blocks {
 		}
 
 		public static StackTrace WriteStackFrame(StackTrace stackTrace, int frameNo, MethodBase newMethod) {
-			var frames = (StackFrame[])framesField.GetValue(stackTrace);
-			int numFramesToSkip = (int)methodsToSkipField.GetValue(stackTrace);
+			var frames = (StackFrame[])framesField.GetValue(stackTrace)!;
+			int numFramesToSkip = (int)methodsToSkipField.GetValue(stackTrace)!;
 			WriteMethodBase(frames[numFramesToSkip + frameNo], newMethod);
 			return stackTrace;
 		}

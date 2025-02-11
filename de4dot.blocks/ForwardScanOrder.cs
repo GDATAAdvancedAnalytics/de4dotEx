@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks {
@@ -30,7 +31,7 @@ namespace de4dot.blocks {
 		IList<BaseBlock> sorted;
 		Dictionary<BaseBlock, BlockInfo> blockInfos = new Dictionary<BaseBlock, BlockInfo>();
 		Dictionary<BaseBlock, bool> inNewList = new Dictionary<BaseBlock, bool>();
-		List<BaseBlock> newList;
+		List<BaseBlock>? newList;
 
 		class BlockInfo {
 			BaseBlock baseBlock;
@@ -64,7 +65,7 @@ namespace de4dot.blocks {
 		public List<BaseBlock> Fix() {
 			CreateBlockInfos();
 			CreateNewList();
-			return newList;
+			return newList!;
 		}
 
 		void CreateBlockInfos() {
@@ -151,6 +152,7 @@ namespace de4dot.blocks {
 		}
 
 		void AddToNewList(BaseBlock bb) {
+			Debug.Assert(newList != null);
 			if (inNewList.ContainsKey(bb) || !scopeBlock.IsOurBaseBlock(bb))
 				return;
 			inNewList[bb] = false;

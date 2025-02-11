@@ -20,10 +20,12 @@
 using System.Collections.Generic;
 
 namespace de4dot.blocks {
-	public class Tuple<T1, T2> {
-		public T1 Item1 { get; set; }
-		public T2 Item2 { get; set; }
-		public override bool Equals(object obj) {
+	public class Tuple<T1, T2> 
+		where T1 : notnull
+		where T2 : notnull {
+		public T1 Item1 { get; set; } = default!;
+		public T2 Item2 { get; set; } = default!;
+		public override bool Equals(object? obj) {
 			var other = obj as Tuple<T1, T2>;
 			if (other == null)
 				return false;
@@ -34,7 +36,7 @@ namespace de4dot.blocks {
 	}
 
 	static class Utils {
-		public static IDictionary<T, int> CreateObjectToIndexDictionary<T>(IList<T> objs) {
+		public static IDictionary<T, int> CreateObjectToIndexDictionary<T>(IList<T> objs) where T: notnull {
 			var dict = new Dictionary<T, int>();
 			for (int i = 0; i < objs.Count; i++)
 				dict[objs[i]] = i;
@@ -48,7 +50,7 @@ namespace de4dot.blocks {
 			return olist;
 		}
 
-		public static IEnumerable<T> Unique<T>(IEnumerable<T> values) {
+		public static IEnumerable<T> Unique<T>(IEnumerable<T> values) where T : notnull {
 			// HashSet is only available in .NET 3.5 and later.
 			var dict = new Dictionary<T, bool>();
 			foreach (var val in values)

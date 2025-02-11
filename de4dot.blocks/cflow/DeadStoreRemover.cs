@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
@@ -27,8 +28,8 @@ namespace de4dot.blocks.cflow {
 	// I've only seen Xenocode generate this kind of code, so the code below is a special case of
 	// the more general case.
 	class DeadStoreRemover : IBlocksDeobfuscator {
-		Blocks blocks;
-		List<Block> allBlocks;
+		Blocks? blocks;
+		List<Block>? allBlocks;
 		List<AccessFlags> localFlags = new List<AccessFlags>();
 		List<bool> deadLocals = new List<bool>();
 
@@ -49,6 +50,7 @@ namespace de4dot.blocks.cflow {
 		}
 
 		bool Remove() {
+			Debug.Assert(blocks != null);
 			if (blocks.Locals.Count == 0)
 				return false;
 
@@ -76,9 +78,11 @@ namespace de4dot.blocks.cflow {
 		}
 
 		void FindLoadStores() {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			foreach (var block in allBlocks) {
 				foreach (var instr in block.Instructions) {
-					Local local;
+					Local? local;
 					AccessFlags flags;
 					switch (instr.OpCode.Code) {
 					case Code.Ldloc:
@@ -121,12 +125,14 @@ namespace de4dot.blocks.cflow {
 		}
 
 		bool RemoveDeadStores() {
+			Debug.Assert(allBlocks != null);
+			Debug.Assert(blocks != null);
 			bool modified = false;
 			foreach (var block in allBlocks) {
 				var instructions = block.Instructions;
 				for (int i = 0; i < instructions.Count; i++) {
 					var instr = instructions[i];
-					Local local;
+					Local? local;
 					switch (instr.OpCode.Code) {
 					case Code.Stloc:
 					case Code.Stloc_S:

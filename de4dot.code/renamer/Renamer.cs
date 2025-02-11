@@ -24,6 +24,8 @@ using dnlib.DotNet;
 using de4dot.code.renamer.asmmodules;
 using dnlib.DotNet.Resources;
 using de4dot.blocks;
+using System.Xml.Serialization;
+using System.Linq;
 
 namespace de4dot.code.renamer {
 	[Flags]
@@ -290,14 +292,84 @@ namespace de4dot.code.renamer {
 			foreach (var module in modules.TheModules) {
 				if (module.ObfuscatedFile.RemoveNamespaceWithOneType)
 					RemoveOneClassNamespaces(module);
+				if (System.IO.File.Exists(module.RenameFile)) {
+					RenameBasedOnConfiguration(module, module.RenameFile);
+				}
 			}
 
 			var state = new TypeRenamerState();
 			foreach (var type in modules.AllTypes)
 				state.AddTypeName(memberInfos.Type(type).oldName);
+
 			PrepareRenameTypes(modules.BaseTypes, state);
 			FixClsTypeNames();
 			RenameTypeDefs(modules.NonNestedTypes);
+		}
+
+		void RenameBasedOnConfiguration(Module module, string fileName) {
+			var serializer = new XmlSerializer(typeof(RenamerConfiguration));
+			RenamerConfiguration configuration;
+			using (var reader = new System.IO.StreamReader(fileName))
+			{
+			   configuration = (RenamerConfiguration)serializer.Deserialize(reader);
+			}
+
+			foreach (var typeDef in module.GetAllTypes()) {
+				var typeConfiguration = configuration.Types.Types.FirstOrDefault(tc => uint.Parse(tc.Token.Substring(2), System.Globalization.NumberStyles.HexNumber) == typeDef.TypeDef.MDToken.Raw);
+				if (typeConfiguration is null) continue;
+
+				RenameTypeUsingConfiguration(typeDef, typeConfiguration);				
+			}
+		}
+
+		void RenameTypeUsingConfiguration(MTypeDef typeDef, TypeConfiguration typeConfiguration) {
+			var info = memberInfos.Type(typeDef);
+			if (typeConfiguration.NewName is not null)
+				info.Rename(typeConfiguration.NewName);
+
+			foreach (var methodConfiguration in typeConfiguration.Methods) {
+				var methodToken = uint.Parse(methodConfiguration.Token.Substring(2), System.Globalization.NumberStyles.HexNumber);
+				var methodDef = typeDef.AllMethods.FirstOrDefault(md => methodToken == md.MethodDef.MDToken.Raw);
+				if (methodDef is null) continue;
+
+				var methodInfo = memberInfos.Method(methodDef);
+				if (methodConfiguration.NewName is not null)
+					methodInfo.suggestedName = methodConfiguration.NewName;
+
+				foreach (var paramConfiguration in methodConfiguration.Parameter) {
+					var paramInfo = memberInfos.Param(methodDef.ParamDefs[paramConfiguration.Index]);
+					if (paramConfiguration.NewName is not null)
+						paramInfo.newName = paramConfiguration.NewName;
+				}
+			}
+
+			foreach (var fieldConfiguration in typeConfiguration.Fields) {
+				var fieldToken = uint.Parse(fieldConfiguration.Token.Substring(2), System.Globalization.NumberStyles.HexNumber);
+				var fieldDef = typeDef.AllFields.FirstOrDefault(md => fieldToken == md.FieldDef.MDToken.Raw);
+				if (fieldDef is null) continue;
+
+				var fieldInfo = memberInfos.Field(fieldDef);
+				if (fieldConfiguration.NewName is not null)
+					fieldInfo.Rename(fieldConfiguration.NewName);
+			}
+
+			foreach (var propertyConfiguration in typeConfiguration.Properties) {
+				var propertyToken = uint.Parse(propertyConfiguration.Token.Substring(2), System.Globalization.NumberStyles.HexNumber);
+				var propertyDef = typeDef.AllProperties.FirstOrDefault(md => propertyToken == md.PropertyDef.MDToken.Raw);
+				if (propertyDef is null) continue;
+
+				var propertyInfo = memberInfos.Property(propertyDef);
+				if (propertyConfiguration.NewName is not null)
+					propertyInfo.Rename(propertyConfiguration.NewName);
+					propertyInfo.suggestedName = propertyConfiguration.NewName;
+			}
+
+			foreach (var nestedTypeConfigurationConfiguration in typeConfiguration.NestedTypes) {
+				var nestedTypeDef = typeDef.NestedTypes.FirstOrDefault(nt => uint.Parse(nestedTypeConfigurationConfiguration.Token.Substring(2), System.Globalization.NumberStyles.HexNumber) == nt.TypeDef.MDToken.Raw);
+				if (nestedTypeDef is null) continue;
+
+				RenameTypeUsingConfiguration(nestedTypeDef, nestedTypeConfigurationConfiguration);
+			}
 		}
 
 		void RemoveOneClassNamespaces(Module module) {

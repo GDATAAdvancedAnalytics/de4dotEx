@@ -19,6 +19,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
@@ -60,7 +62,8 @@ namespace de4dot.blocks.cflow {
 		static bool IsSwitchType1(Block switchBlock) => switchBlock.FirstInstr.IsLdloc();
 
 		bool IsSwitchType2(Block switchBlock) {
-			Local local = null;
+			Debug.Assert(blocks != null);
+			Local? local = null;
 			foreach (var instr in switchBlock.Instructions) {
 				if (!instr.IsLdloc())
 					continue;
@@ -90,6 +93,7 @@ namespace de4dot.blocks.cflow {
 		}
 
 		bool IsStLdlocBranch(Block switchBlock, bool isSwitch) {
+			Debug.Assert(blocks != null);
 			int numInstrs = 2 + (isSwitch ? 1 : 0);
 			return switchBlock.Instructions.Count == numInstrs &&
 				switchBlock.Instructions[0].IsStloc() &&
@@ -103,12 +107,14 @@ namespace de4dot.blocks.cflow {
 				return modified;
 			var targets = new List<Block>(switchBlock.Targets);
 
+			Debug.Assert(switchBlock.FallThrough != null);
 			modified |= DeobfuscateTOS(targets, switchBlock.FallThrough, switchBlock);
 
 			return modified;
 		}
 
 		bool DeobfuscateLdloc(Block switchBlock) {
+			Debug.Assert(blocks != null);
 			bool modified = false;
 
 			var switchVariable = Instr.GetLocalVar(blocks.Locals, switchBlock.Instructions[0]);
@@ -119,12 +125,14 @@ namespace de4dot.blocks.cflow {
 				return modified;
 			var targets = new List<Block>(switchBlock.Targets);
 
+			Debug.Assert(switchBlock.FallThrough != null);
 			modified |= DeobfuscateLdloc(targets, switchBlock.FallThrough, switchBlock, switchVariable);
 
 			return modified;
 		}
 
 		bool DeobfuscateStLdloc(Block switchBlock) {
+			Debug.Assert(blocks != null);
 			bool modified = false;
 
 			var switchVariable = Instr.GetLocalVar(blocks.Locals, switchBlock.Instructions[0]);
@@ -135,6 +143,7 @@ namespace de4dot.blocks.cflow {
 				return modified;
 			var targets = new List<Block>(switchBlock.Targets);
 
+			Debug.Assert(switchBlock.FallThrough != null);
 			modified |= DeobfuscateStLdloc(targets, switchBlock.FallThrough, switchBlock);
 
 			return modified;
@@ -149,6 +158,8 @@ namespace de4dot.blocks.cflow {
 		//		ldloc N
 		//		switch (......)
 		bool DeobfuscateStLdloc(IList<Block> switchTargets, Block switchFallThrough, Block block) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			bool modified = false;
 			foreach (var source in new List<Block>(block.Sources)) {
 				if (!IsBranchBlock(source))
@@ -175,6 +186,8 @@ namespace de4dot.blocks.cflow {
 		//		ldloc N
 		//		switch (......)
 		bool DeobfuscateLdloc(IList<Block> switchTargets, Block switchFallThrough, Block block, Local switchVariable) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			bool modified = false;
 			foreach (var source in new List<Block>(block.Sources)) {
 				if (IsBranchBlock(source)) {
@@ -194,6 +207,7 @@ namespace de4dot.blocks.cflow {
 					var target = GetSwitchTarget(switchTargets, switchFallThrough, instructionEmulator.GetLocal(switchVariable));
 					if (target == null)
 						continue;
+					Debug.Assert(source.Targets != null);
 					if (source.Targets[0] == block) {
 						source.SetNewTarget(0, target);
 						modified = true;
@@ -214,6 +228,8 @@ namespace de4dot.blocks.cflow {
 		//	swblk:
 		//		switch (......)
 		bool DeobfuscateTOS(IList<Block> switchTargets, Block switchFallThrough, Block block) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			bool modified = false;
 			foreach (var source in new List<Block>(block.Sources)) {
 				if (!IsBranchBlock(source))
@@ -241,6 +257,7 @@ namespace de4dot.blocks.cflow {
 		//		ldloc N
 		//		br swblk
 		bool DeobfuscateTos_Ldloc(IList<Block> switchTargets, Block switchFallThrough, Block block) {
+			Debug.Assert(blocks != null);
 			if (IsLdlocBranch(block, false)) {
 				var switchVariable = Instr.GetLocalVar(blocks.Locals, block.Instructions[0]);
 				if (switchVariable == null)
@@ -347,6 +364,8 @@ namespace de4dot.blocks.cflow {
 				var consts = GetBccLocalConstants(bccSource);
 				if (consts.Count == 0)
 					continue;
+				Debug.Assert(bccSource.FallThrough != null);
+				Debug.Assert(bccSource.Targets != null);
 				var newFallThrough = CreateBlock(consts, bccSource.FallThrough);
 				var newTarget = CreateBlock(consts, bccSource.Targets[0]);
 				var oldFallThrough = bccSource.FallThrough;
@@ -367,11 +386,13 @@ namespace de4dot.blocks.cflow {
 				block.Instructions.Add(new Instr(Instruction.CreateLdcI4(kv.Value)));
 				block.Instructions.Add(new Instr(OpCodes.Stloc.ToInstruction(kv.Key)));
 			}
+			Debug.Assert(fallThrough.Parent != null);
 			fallThrough.Parent.Add(block);
 			return block;
 		}
 
 		Dictionary<Local, int> GetBccLocalConstants(Block block) {
+			Debug.Assert(blocks != null);
 			var dict = new Dictionary<Local, int>();
 			var instrs = block.Instructions;
 			for (int i = 0; i < instrs.Count; i++) {
@@ -399,7 +420,9 @@ namespace de4dot.blocks.cflow {
 			return dict;
 		}
 
-		bool EmulateGetTarget(Block switchBlock, out Block target) {
+		bool EmulateGetTarget(Block switchBlock, out Block? target) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			instructionEmulator.Initialize(blocks, allBlocks[0] == switchBlock);
 			try {
 				instructionEmulator.Emulate(switchBlock.Instructions, 0, switchBlock.Instructions.Count - 1);
@@ -414,6 +437,8 @@ namespace de4dot.blocks.cflow {
 		}
 
 		bool WillHaveKnownTarget(Block switchBlock, Block source) {
+			Debug.Assert(blocks != null);
+			Debug.Assert(allBlocks != null);
 			instructionEmulator.Initialize(blocks, allBlocks[0] == source);
 			try {
 				instructionEmulator.Emulate(source.Instructions);
@@ -426,14 +451,15 @@ namespace de4dot.blocks.cflow {
 			return GetTarget(switchBlock) != null;
 		}
 
-		Block GetTarget(Block switchBlock) {
+		Block? GetTarget(Block switchBlock) {
 			var val1 = instructionEmulator.Pop();
 			if (!val1.IsInt32())
 				return null;
+			Debug.Assert(switchBlock.FallThrough != null);
 			return CflowUtils.GetSwitchTarget(switchBlock.Targets, switchBlock.FallThrough, (Int32Value)val1);
 		}
 
-		static Block GetSwitchTarget(IList<Block> targets, Block fallThrough, Value value) {
+		static Block? GetSwitchTarget(IList<Block> targets, Block fallThrough, Value value) {
 			if (!value.IsInt32())
 				return null;
 			return CflowUtils.GetSwitchTarget(targets, fallThrough, (Int32Value)value);

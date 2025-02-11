@@ -28,9 +28,9 @@ namespace de4dot.blocks.cflow {
 	/// </summary>
 	public struct AccessChecker {
 		TypeDef userType;
-		List<TypeDef> userTypeEnclosingTypes;
+		List<TypeDef>? userTypeEnclosingTypes;
 		bool enclosingTypesInitialized;
-		Dictionary<IType, bool> baseTypes;
+		Dictionary<IType, bool>? baseTypes;
 		bool baseTypesInitialized;
 
 		[Flags]
@@ -132,7 +132,7 @@ namespace de4dot.blocks.cflow {
 		/// <param name="tr">The type</param>
 		/// <returns><c>true</c> if it has access to it, <c>false</c> if not, and <c>null</c>
 		/// if we can't determine it (eg. we couldn't resolve a type or input was <c>null</c>)</returns>
-		public bool? CanAccess(TypeRef tr) {
+		public bool? CanAccess(TypeRef? tr) {
 			if (tr == null)
 				return null;
 			return CanAccess(tr.Resolve());
@@ -144,7 +144,7 @@ namespace de4dot.blocks.cflow {
 		/// <param name="td">The type</param>
 		/// <returns><c>true</c> if it has access to it, <c>false</c> if not, and <c>null</c>
 		/// if we can't determine it (eg. we couldn't resolve a type or input was <c>null</c>)</returns>
-		public bool? CanAccess(TypeDef td) {
+		public bool? CanAccess(TypeDef? td) {
 			var access = GetTypeAccess(td, null);
 			if (access == null)
 				return null;
@@ -160,7 +160,7 @@ namespace de4dot.blocks.cflow {
 		/// </summary>
 		/// <param name="td">The type</param>
 		/// <param name="git">Generic instance of <paramref name="td"/> or <c>null</c> if none</param>
-		CheckTypeAccess? GetTypeAccess(TypeDef td, GenericInstSig git) {
+		CheckTypeAccess? GetTypeAccess(TypeDef? td, GenericInstSig? git) {
 			if (td == null)
 				return null;
 			if (userType == td)
@@ -212,7 +212,7 @@ namespace de4dot.blocks.cflow {
 			return CheckTypeAccess.Normal;
 		}
 
-		CheckTypeAccess GetTypeAccess2(TypeDef td, GenericInstSig git) {
+		CheckTypeAccess GetTypeAccess2(TypeDef? td, GenericInstSig? git) {
 			while (td != null) {
 				var declType = td.DeclaringType;
 				if (userType != declType && !IsVisible(td, git))
@@ -229,7 +229,7 @@ namespace de4dot.blocks.cflow {
 		/// </summary>
 		/// <param name="td">Type</param>
 		/// <param name="git">Generic instance of <paramref name="td"/> or <c>null</c> if none</param>
-		bool IsVisible(TypeDef td, GenericInstSig git) {
+		bool IsVisible(TypeDef? td, GenericInstSig? git) {
 			if (td == null)
 				return false;
 			if (td == userType)
@@ -267,7 +267,7 @@ namespace de4dot.blocks.cflow {
 			}
 		}
 
-		bool IsSameAssemblyOrFriendAssembly(ModuleDef module) {
+		bool IsSameAssemblyOrFriendAssembly(ModuleDef? module) {
 			if (module == null)
 				return false;
 			var userModule = userType.Module;
@@ -299,12 +299,12 @@ namespace de4dot.blocks.cflow {
 		/// </summary>
 		/// <param name="td">Type</param>
 		/// <param name="git">Generic instance of <paramref name="td"/> or <c>null</c> if none</param>
-		bool CheckFamily(TypeDef td, GenericInstSig git) {
+		bool CheckFamily(TypeDef? td, GenericInstSig? git) {
 			if (td == null)
 				return false;
 			InitializeBaseTypes();
 
-			if (baseTypes.ContainsKey(git ?? (IType)td))
+			if (baseTypes!.ContainsKey(git ?? (IType)td))
 				return true;
 
 			// td is Family, FamANDAssem, or FamORAssem. If we derive from its enclosing type,
@@ -340,7 +340,7 @@ namespace de4dot.blocks.cflow {
 				userTypeEnclosingTypes = GetEnclosingTypes(userType, true);
 				enclosingTypesInitialized = true;
 			}
-			return userTypeEnclosingTypes;
+			return userTypeEnclosingTypes!;
 		}
 
 		/// <summary>
@@ -372,9 +372,9 @@ namespace de4dot.blocks.cflow {
 		/// <param name="fd">The field</param>
 		/// <returns><c>true</c> if it has access to it, <c>false</c> if not, and <c>null</c>
 		/// if we can't determine it (eg. we couldn't resolve a type or input was <c>null</c>)</returns>
-		public bool? CanAccess(FieldDef fd) => CanAccess(fd, null);
+		public bool? CanAccess(FieldDef? fd) => CanAccess(fd, null);
 
-		bool? CanAccess(FieldDef fd, GenericInstSig git) {
+		bool? CanAccess(FieldDef? fd, GenericInstSig? git) {
 			if (fd == null)
 				return null;
 			var access = GetTypeAccess(fd.DeclaringType, git);
@@ -389,7 +389,7 @@ namespace de4dot.blocks.cflow {
 			return IsVisible(fd, git);
 		}
 
-		bool IsVisible(FieldDef fd, GenericInstSig git) {
+		bool IsVisible(FieldDef? fd, GenericInstSig? git) {
 			if (fd == null)
 				return false;
 			var fdDeclaringType = fd.DeclaringType;
@@ -435,9 +435,9 @@ namespace de4dot.blocks.cflow {
 		/// <param name="md">The method</param>
 		/// <returns><c>true</c> if it has access to it, <c>false</c> if not, and <c>null</c>
 		/// if we can't determine it (eg. we couldn't resolve a type or input was <c>null</c>)</returns>
-		public bool? CanAccess(MethodDef md) => CanAccess(md, (GenericInstSig)null);
+		public bool? CanAccess(MethodDef? md) => CanAccess(md, (GenericInstSig?)null);
 
-		bool? CanAccess(MethodDef md, GenericInstSig git) {
+		bool? CanAccess(MethodDef? md, GenericInstSig? git) {
 			if (md == null)
 				return null;
 			var access = GetTypeAccess(md.DeclaringType, git);
@@ -452,7 +452,7 @@ namespace de4dot.blocks.cflow {
 			return IsVisible(md, git);
 		}
 
-		bool IsVisible(MethodDef md, GenericInstSig git) {
+		bool IsVisible(MethodDef? md, GenericInstSig? git) {
 			if (md == null)
 				return false;
 			var mdDeclaringType = md.DeclaringType;
@@ -524,7 +524,7 @@ namespace de4dot.blocks.cflow {
 
 		bool? CanAccess(TypeDef td, MemberRef mr) => CanAccess(td, null, mr);
 
-		bool? CanAccess(TypeDef td, GenericInstSig git, MemberRef mr) {
+		bool? CanAccess(TypeDef? td, GenericInstSig? git, MemberRef? mr) {
 			if (mr == null || td == null)
 				return null;
 
