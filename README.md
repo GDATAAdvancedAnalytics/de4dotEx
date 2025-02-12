@@ -62,6 +62,7 @@ Supported obfuscators/packers
 * ILProtector
 * MaxtoCode
 * MPRESS
+* Phoenix Protector - by [TheProxy @ tuts4you](https://forum.tuts4you.com/topic/37111-c-phoneix-protector-de4dot-code/)
 * Rummage
 * Skater.NET
 * SmartAssembly
