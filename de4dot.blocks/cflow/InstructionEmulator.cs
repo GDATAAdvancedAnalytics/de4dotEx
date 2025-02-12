@@ -369,7 +369,6 @@ namespace de4dot.blocks.cflow {
 
 			case Code.Ldelem_I1: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
 			case Code.Ldelem_I2: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
-			case Code.Ldelem_I4: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
 			case Code.Ldelem_I8: valueStack.Pop(2); valueStack.Push(Int64Value.CreateUnknown()); break;
 			case Code.Ldelem_U1: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknownUInt8()); break;
 			case Code.Ldelem_U2: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknownUInt16()); break;
@@ -402,7 +401,11 @@ namespace de4dot.blocks.cflow {
 			case Code.Conv_R4:	Emulate_Conv_R4(instr); break;
 			case Code.Conv_R8:	Emulate_Conv_R8(instr); break;
 
-			case Code.Arglist:
+            case Code.Newarr: Emulate_Newarr(instr); break;
+            case Code.Stelem_I4: Emulate_Stelem_I4(instr); break;
+            case Code.Ldelem_I4: Emulate_Ldelem_I4(instr); break;
+
+            case Code.Arglist:
 			case Code.Beq:
 			case Code.Beq_S:
 			case Code.Bge:
@@ -460,7 +463,6 @@ namespace de4dot.blocks.cflow {
 			case Code.Leave_S:
 			case Code.Localloc:
 			case Code.Mkrefany:
-			case Code.Newarr:
 			case Code.Newobj:
 			case Code.Nop:
 			case Code.Pop:
@@ -473,7 +475,6 @@ namespace de4dot.blocks.cflow {
 			case Code.Stelem_I:
 			case Code.Stelem_I1:
 			case Code.Stelem_I2:
-			case Code.Stelem_I4:
 			case Code.Stelem_I8:
 			case Code.Stelem_R4:
 			case Code.Stelem_R8:
@@ -509,8 +510,39 @@ namespace de4dot.blocks.cflow {
 				valueStack.Push(pushes);
 			}
 		}
+        void Emulate_Newarr(Instruction instr)
+        {
+            var val = valueStack.Pop();
+            if (val.IsInt32())
+            {
+                Int32Value arrSize = (Int32Value)val;
+                List<Value> arr = new List<Value>(new Value[arrSize.Value]);
+                valueStack.Push(new ObjectValue(arr));
+            }
+            else
+            {
+                valueStack.Push(new ObjectValue());
+            }
+        }
 
-		void Emulate_Conv_U1(Instruction instr) {
+        void Emulate_Stelem_I4(Instruction instr)
+        {
+            var val = valueStack.Pop();
+            Int32Value idx = (Int32Value)valueStack.Pop();
+            ObjectValue arrobj = (ObjectValue)valueStack.Pop();
+            List<Value> arr = (List<Value>)arrobj.obj;
+            arr[idx.Value] = (Int32Value)val;
+        }
+
+        void Emulate_Ldelem_I4(Instruction instr)
+        {
+            Int32Value idx = (Int32Value)valueStack.Pop();
+            ObjectValue arrobj = (ObjectValue)valueStack.Pop();
+            List<Value> arr = (List<Value>)arrobj.obj;
+            valueStack.Push(arr[idx.Value]);
+        }
+
+        void Emulate_Conv_U1(Instruction instr) {
 			var val1 = valueStack.Pop();
 			switch (val1.valueType) {
 			case ValueType.Int32:	valueStack.Push(Int32Value.Conv_U1((Int32Value)val1)); break;
