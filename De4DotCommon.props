@@ -17,5 +17,8 @@
 
     <DnlibVersion>3.6.0</DnlibVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
 
 </Project>
