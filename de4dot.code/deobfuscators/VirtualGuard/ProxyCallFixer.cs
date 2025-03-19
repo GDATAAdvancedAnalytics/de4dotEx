@@ -40,6 +40,8 @@ namespace de4dot.code.deobfuscators.VirtualGuard
             }
 
             moduleCctor = DotNetUtils.GetModuleTypeCctor(module);
+            if (moduleCctor == null)
+	            return;
             var instrs = moduleCctor.Body.Instructions;
             var instrCount = instrs.Count;
             for (int i = 0; i < instrCount; i++)
