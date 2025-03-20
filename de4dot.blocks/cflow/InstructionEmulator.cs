@@ -528,18 +528,25 @@ namespace de4dot.blocks.cflow {
         void Emulate_Stelem_I4(Instruction instr)
         {
             var val = valueStack.Pop();
-            Int32Value idx = (Int32Value)valueStack.Pop();
-            ObjectValue arrobj = (ObjectValue)valueStack.Pop();
-            List<Value> arr = (List<Value>)arrobj.obj;
-            arr[idx.Value] = (Int32Value)val;
+            var idxValue = valueStack.Pop();
+            var obj = valueStack.Pop();
+            if (val is Int32Value &&
+	            idxValue is Int32Value idx && idx.AllBitsValid() &&
+                obj is ObjectValue { obj: List<Value> arr } && arr.Count > idx.Value) {
+	            arr[idx.Value] = val;
+            }
         }
 
-        void Emulate_Ldelem_I4(Instruction instr)
-        {
-            Int32Value idx = (Int32Value)valueStack.Pop();
-            ObjectValue arrobj = (ObjectValue)valueStack.Pop();
-            List<Value> arr = (List<Value>)arrobj.obj;
-            valueStack.Push(arr[idx.Value]);
+        void Emulate_Ldelem_I4(Instruction instr) {
+	        var idxValue = valueStack.Pop();
+            var obj = valueStack.Pop();
+            if (idxValue is Int32Value idx && idx.AllBitsValid() &&
+                obj is ObjectValue { obj: List<Value> arr } && arr.Count > idx.Value) {
+	            valueStack.Push(arr[idx.Value]);
+            }
+            else {
+	            valueStack.Push(Int32Value.CreateUnknown());
+            }
         }
 
         void Emulate_Conv_U1(Instruction instr) {
