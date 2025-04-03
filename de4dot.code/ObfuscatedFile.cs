@@ -558,7 +558,7 @@ namespace de4dot.code {
 
 		public void DeobfuscateEnd() {
 			foreach (var m in inlineCandidate) {
-				m.Value.DeclaringType.Remove(m.Value);
+				m.Value.DeclaringType?.Remove(m.Value);
 			}
 
 			DeobfuscateCleanUp();
