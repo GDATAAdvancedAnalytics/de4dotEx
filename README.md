@@ -16,7 +16,7 @@ Read https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryforma
 Binaries
 ========
 
-Get binaries from the build server [![](https://github.com/GDATAAdvanvedAnalytics/de4dotEx/workflows/CI%20build/badge.svg)](https://github.com/GDATAAdvancedAnalytics/de4dotEx/actions).
+Get binaries from the build server [![](https://github.com/GDATAAdvancedAnalytics/de4dotEx/workflows/CI%20build/badge.svg)](https://github.com/GDATAAdvancedAnalytics/de4dotEx/actions).
 
 It's FREE but there's NO SUPPORT
 ================================
