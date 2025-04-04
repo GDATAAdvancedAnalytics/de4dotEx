@@ -1,16 +1,22 @@
-Description
+de4dotEx
 ===========
 
-de4dot is an open source (GPLv3) .NET deobfuscator and unpacker written in C#. It will try its best to restore a packed and obfuscated assembly to almost the original assembly. Most of the obfuscation can be completely restored (eg. string encryption), but symbol renaming is impossible to restore since the original names aren't (usually) part of the obfuscated assembly.
+de4dotEx is an open source (GPLv3) .NET deobfuscator and unpacker written in C#.
+The project is a fork of [de4dot](https://github.com/de4dot/de4dot) and contains fixes and additions made in various different forks over the years. 
+It will try its best to restore a packed and obfuscated assembly to almost the original assembly.
+Most of the obfuscation can be completely restored (e.g., string encryption), but symbol renaming is impossible to restore since the original names aren't (usually) part of the obfuscated assembly.
 
-It uses [dnlib](https://github.com/0xd4d/dnlib/) to read and write assemblies so make sure you get it or it won't compile.
+It uses [dnlib](https://github.com/0xd4d/dnlib/) to read and write assemblies.
 
-***WARNING***: `de4dot` uses `BinaryFormatter` in some backends (`BabelNET` and `CodeVeil`). Code obfuscated with these deobfuscators (or the one, that tricks `de4dot` to detect so) will cause execution of arbitrary code during deobfuscation. For example it may be possible to write code tracking attempts of applying `de4dot`. A more proper solution is needed for deobfuscating such binaries, such as a completely own parser doing the deserialization safely. Read https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-security-guide for more info.
+***WARNING***: `de4dot` uses `BinaryFormatter` in some backends (`BabelNET` and `CodeVeil`).
+Code obfuscated with these obfuscators (or the one, that tricks `de4dot` to detect so) will cause execution of arbitrary code during deobfuscation. For example it may be possible to write code tracking attempts of applying `de4dot`.
+A more proper solution is needed for deobfuscating such binaries, such as a completely own parser doing the deserialization safely.
+Read https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-security-guide for more info.
 
 Binaries
 ========
 
-Get binaries from the build server [![](https://github.com/0xd4d/de4dot/workflows/GitHub%20CI/badge.svg)](https://github.com/0xd4d/de4dot/actions).
+Get binaries from the build server [![](https://github.com/GDATAAdvanvedAnalytics/de4dotEx/workflows/CI%20build/badge.svg)](https://github.com/GDATAAdvancedAnalytics/de4dotEx/actions).
 
 It's FREE but there's NO SUPPORT
 ================================
