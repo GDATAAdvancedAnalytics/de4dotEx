@@ -14,8 +14,7 @@
     <Copyright>Copyright (C) 2011-2018 de4dot@gmail.com</Copyright>
     <OutputPath>$(MSBuildThisFileDirectory)\$(Configuration)</OutputPath>
     <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
-
-    <DnlibVersion>3.6.0</DnlibVersion>
+    <DnlibVersion>4.5.0</DnlibVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <SelfContained>true</SelfContained>
