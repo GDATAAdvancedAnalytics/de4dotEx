@@ -535,7 +535,10 @@ namespace de4dot.blocks.cflow {
             if (val.IsInt32())
             {
                 Int32Value arrSize = (Int32Value)val;
-                List<Value> arr = new List<Value>(new Value[arrSize.Value]);
+                List<Value> arr = new List<Value>(arrSize.Value);
+                for (int i = 0; i < arrSize.Value; i++) {
+	                arr.Add(new UnknownValue());
+                }
                 valueStack.Push(new ObjectValue(arr));
             }
             else
