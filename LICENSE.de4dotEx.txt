@@ -1,22 +1,24 @@
 <LICENSE>
-    Copyright (C) 2011-2014 de4dot@gmail.com
+    Original project: de4dot by 0xd4d (https://github.com/de4dot/de4dot)
+    Forked and continued as de4dotEx.
 
-    This file is part of de4dot.
+    Copyright (C) 2011-2020 de4dot@gmail.com
+    Copyright (C) 2025 G DATA Advanced Analytics GmbH
 
-    de4dot is free software: you can redistribute it and/or modify
+    de4dotEx is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    de4dot is distributed in the hope that it will be useful,
+    de4dotEx is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with de4dot.  If not, see <http://www.gnu.org/licenses/>.
+    along with de4dotEx.  If not, see <http://www.gnu.org/licenses/>.
 </LICENSE>
 
-Official site: https://github.com/0xd4d/de4dot
+Official site: https://github.com/GDATAAdvancedAnalytics/de4dotEx
 
 See the file COPYING for more details.
