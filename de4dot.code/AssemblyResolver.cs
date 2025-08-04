@@ -61,6 +61,10 @@ namespace de4dot.code {
 
 			var windir = Environment.GetEnvironmentVariable("WINDIR");
 			if (!string.IsNullOrEmpty(windir)) {
+				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v4.0.30319");
+				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v3.5");
+				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v3.0");
+				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v2.0.50727");
 				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v1.1.4322");
 				AddIfExists(paths, windir, @"Microsoft.NET\Framework\v1.0.3705");
 			}
@@ -81,6 +85,11 @@ namespace de4dot.code {
 			AddIfExists(paths, path, @"Microsoft SDKs\Silverlight\v5.0\Libraries\Server");
 			AddIfExists(paths, path, @"Microsoft.NET\SDK\CompactFramework\v2.0\WindowsCE");
 			AddIfExists(paths, path, @"Microsoft.NET\SDK\CompactFramework\v3.5\WindowsCE");
+			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8");
+			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2");
+			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1");
+			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7");
+			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2");
 			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1");
 			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6");
 			AddIfExists(paths, path, @"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.2");
