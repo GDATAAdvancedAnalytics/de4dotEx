@@ -645,13 +645,14 @@ namespace de4dot.code {
 				return;
 
 			var rewritten = false;
-			for (var i = 0; i < method.Body.Instructions.Count; i++) {
-				var instr = method.Body.Instructions[i];
+			foreach (var instr in method.Body.Instructions) {
 				if (instr.OpCode == OpCodes.Call) {
 					var targetMethod = (IMethod?)instr.Operand;
 					if (targetMethod is null) continue;
 					if (inlineCandidate.TryGetValue(targetMethod.ResolveMethodDef()?.FullName ?? targetMethod.FullName, out var methodToInline)) {
-						instr.Operand = methodToInline.Body.Instructions[methodToInline.Parameters.Count].Operand;
+						var realCall = methodToInline.Body.Instructions[methodToInline.Parameters.Count];
+						instr.OpCode = realCall.OpCode;
+						instr.Operand = realCall.Operand;
 						rewritten = true;
 					}
 				}
