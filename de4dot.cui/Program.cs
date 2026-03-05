@@ -131,14 +131,7 @@ namespace de4dot.cui {
 				exitCode = 1;
 			}
 			catch (Exception ex) {
-				if (PrintFullStackTrace()) {
-					PrintStackTrace(ex);
-					Logger.Instance.LogErrorDontIgnore("\nTry the latest version!");
-				}
-				else {
-					Logger.Instance.LogErrorDontIgnore("\n\n");
-					Logger.Instance.LogErrorDontIgnore("Hmmmm... something didn't work. Try the latest version.");
-				}
+				PrintStackTrace(ex);
 				exitCode = 1;
 			}
 
@@ -160,15 +153,6 @@ namespace de4dot.cui {
 			}
 
 			return exitCode;
-		}
-
-		static bool PrintFullStackTrace() {
-			if (!Logger.Instance.IgnoresEvent(LoggerEvent.Verbose))
-				return true;
-			if (HasEnv("STACKTRACE"))
-				return true;
-
-			return false;
 		}
 
 		static bool HasEnv(string name) {

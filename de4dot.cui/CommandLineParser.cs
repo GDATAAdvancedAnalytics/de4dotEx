@@ -175,9 +175,13 @@ namespace de4dot.cui {
 				filesOptions.AssemblyClientFactory = new NewProcessAssemblyClientFactory();
 			}));
 			miscOptions.Add(new NoArgOption(null, "keep-types", "Keep obfuscator types, fields, methods", () => {
+				if (newFileOptions == null)
+					ExitError("Please specify --keep-types after the input file name.");
 				newFileOptions.KeepObfuscatorTypes = true;
 			}));
 			miscOptions.Add(new NoArgOption(null, "preserve-tokens", "Preserve important tokens, #US, #Blob, extra sig data", () => {
+				if (newFileOptions == null)
+					ExitError("Please specify --preserve-tokens after the input file name.");
 				newFileOptions.MetadataFlags |= MetadataFlags.PreserveRids |
 						MetadataFlags.PreserveUSOffsets |
 						MetadataFlags.PreserveBlobOffsets |
