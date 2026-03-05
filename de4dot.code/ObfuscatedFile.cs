@@ -557,8 +557,10 @@ namespace de4dot.code {
 		}
 
 		public void DeobfuscateEnd() {
-			foreach (var m in inlineCandidate) {
-				m.Value.DeclaringType?.Remove(m.Value);
+			if (options.ControlFlowDeobfuscation) {
+				foreach (var m in inlineCandidate) {
+					m.Value.DeclaringType?.Remove(m.Value);
+				}
 			}
 
 			DeobfuscateCleanUp();
