@@ -38,30 +38,32 @@ namespace de4dot.code.deobfuscators.VirtualGuard
                     foundMethods.Add(method);
                 }
             }
+        }
 
-            moduleCctor = DotNetUtils.GetModuleTypeCctor(module);
-            if (moduleCctor == null)
-	            return;
-            var instrs = moduleCctor.Body.Instructions;
-            var instrCount = instrs.Count;
-            for (int i = 0; i < instrCount; i++)
-            {
-                if (instrs[i].OpCode == OpCodes.Ldftn)
-                {
-                    objList.Add(instrs[i].Operand as IMethod);
-                }
-                if (instrs[i].OpCode == OpCodes.Stsfld)
-                {
-                    realObj = instrs[i].Operand as FieldDef;
-                    stsfldIdx = i;
-                }
-            }
-            //if found nop out all instructions till stsfld instruction
-            if (stsfldIdx != -1)
-            {
-                for (int i = 0; i <= stsfldIdx; i++)
-                    instrs[i].OpCode = OpCodes.Nop;
-            }
+        public void PatchModuleCctor(ModuleDefMD module) {
+	        moduleCctor = DotNetUtils.GetModuleTypeCctor(module);
+	        if (moduleCctor == null)
+		        return;
+	        var instrs = moduleCctor.Body.Instructions;
+	        var instrCount = instrs.Count;
+	        for (int i = 0; i < instrCount; i++)
+	        {
+		        if (instrs[i].OpCode == OpCodes.Ldftn)
+		        {
+			        objList.Add(instrs[i].Operand as IMethod);
+		        }
+		        if (instrs[i].OpCode == OpCodes.Stsfld)
+		        {
+			        realObj = instrs[i].Operand as FieldDef;
+			        stsfldIdx = i;
+		        }
+	        }
+	        //if found nop out all instructions till stsfld instruction
+	        if (stsfldIdx != -1)
+	        {
+		        for (int i = 0; i <= stsfldIdx; i++)
+			        instrs[i].OpCode = OpCodes.Nop;
+	        }
         }
 
         public void ReplaceMethodCalls(IMethod toFind, IMethod toReplace)

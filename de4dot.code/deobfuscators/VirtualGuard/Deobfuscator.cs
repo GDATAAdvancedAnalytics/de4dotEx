@@ -127,6 +127,7 @@ namespace de4dot.code.deobfuscators.VirtualGuard
             public override void DeobfuscateBegin()
             {
                 base.DeobfuscateBegin();
+                proxyCallFixer.PatchModuleCctor(module);
             }
 
             public override void DeobfuscateEnd()
