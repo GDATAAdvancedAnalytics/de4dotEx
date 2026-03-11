@@ -109,7 +109,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 				_lzmaFinder.Find();
 
 				_constantDecrypter = new ConstantsDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _detectedConfuserCore);
-				_resourceDecrypter = new ResourceDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile);
+				_resourceDecrypter = new ResourceDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _detectedConfuserCore);
 
 				if (_lzmaFinder.FoundLzma)
 				{
@@ -254,7 +254,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 					foreach (var instr in moduleCctor.Body.Instructions)
 						if (instr.OpCode == OpCodes.Call && instr.Operand is MethodDef
 						                                 && toRemoveFromCctor.Contains((MethodDef)instr.Operand)) {
-							Console.WriteLine("CEX NOP");
 							instr.OpCode = OpCodes.Nop;
 						}
 
