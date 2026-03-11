@@ -30,7 +30,7 @@ namespace de4dot.code.deobfuscators
         const uint kNumLowLenSymbols = 1 << kNumLowLenBits;
         const uint kNumMidLenSymbols = 1 << kNumMidLenBits;
 
-        public static byte[] Decompress(byte[] data)
+        public static byte[] Decompress(byte[] data, bool sizeIsInt = false)
         {
             var s = new MemoryStream(data);
             var decoder = new LzmaDecoder();
@@ -38,11 +38,19 @@ namespace de4dot.code.deobfuscators
             s.Read(prop, 0, 5);
             decoder.SetDecoderProperties(prop);
             long outSize = 0;
-            for (int i = 0; i < 8; i++)
-            {
-                int v = s.ReadByte();
-                outSize |= ((long)(byte)v) << (8 * i);
+            if (sizeIsInt) {
+	            s.Read(prop, 0, 4);
+	            if (!BitConverter.IsLittleEndian)
+		            Array.Reverse(prop, 0, sizeof(int));
+	            outSize = BitConverter.ToInt32(prop, 0);
             }
+            else {
+	            for (int i = 0; i < 8; i++) {
+		            int v = s.ReadByte();
+		            outSize |= ((long)(byte)v) << (8 * i);
+	            }
+            }
+
             var b = new byte[(int)outSize];
             var z = new MemoryStream(b, true);
             long compressedSize = s.Length - 13;

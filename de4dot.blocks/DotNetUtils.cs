@@ -58,7 +58,7 @@ namespace de4dot.blocks {
 
 	public static class DotNetUtils {
 		public static TypeDef GetModuleType(ModuleDef module) => module.GlobalType;
-		public static MethodDef GetModuleTypeCctor(ModuleDef module) => module.GlobalType.FindStaticConstructor();
+		public static MethodDef? GetModuleTypeCctor(ModuleDef module) => module.GlobalType.FindStaticConstructor();
 
 		public static bool IsEmpty(MethodDef method) {
 			if (method.Body == null)

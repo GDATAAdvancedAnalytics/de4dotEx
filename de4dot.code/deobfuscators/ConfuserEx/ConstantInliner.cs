@@ -50,8 +50,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             _blocks = blocks;
         }
 
-        public bool Deobfuscate(List<Block> allBlocks)
-        {
+        public bool Deobfuscate(List<Block> allBlocks) {
             var modified = false;
             foreach (var block in allBlocks)
             {
