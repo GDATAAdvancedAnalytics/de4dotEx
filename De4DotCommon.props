@@ -10,8 +10,8 @@
     <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\de4dot.snk</AssemblyOriginatorKeyFile>
-    <VersionPrefix>3.3.0</VersionPrefix>
-    <Copyright>Copyright (C) 2011-2020 de4dot@gmail.com, 2025 G DATA Advanced Analytics GmbH</Copyright>
+    <VersionPrefix>3.4.0</VersionPrefix>
+    <Copyright>Copyright (C) 2011-2020 de4dot@gmail.com, 2025-2026 G DATA Advanced Analytics GmbH</Copyright>
     <OutputPath>$(MSBuildThisFileDirectory)\$(Configuration)</OutputPath>
     <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
     <DnlibVersion>4.5.0</DnlibVersion>
