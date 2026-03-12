@@ -21,14 +21,16 @@ namespace de4dot.code.deobfuscators.ConfuserEx
         private byte[] _decryptedBytes;
         private readonly ISimpleDeobfuscator _deobfuscator;
         private readonly MethodDef _lzmaMethod;
+        private readonly bool _isNewLzma;
 
         private readonly ModuleDef _module;
 
-        public ResourceDecrypter(ModuleDef module, MethodDef lzmaMethod, ISimpleDeobfuscator deobfsucator)
+        public ResourceDecrypter(ModuleDef module, MethodDef lzmaMethod, ISimpleDeobfuscator deobfsucator, bool isNewLzma)
         {
-            this._module = module;
-            this._lzmaMethod = lzmaMethod;
+            _module = module;
+            _lzmaMethod = lzmaMethod;
             _deobfuscator = deobfsucator;
+            _isNewLzma = isNewLzma;
         }
 
         public bool CanRemoveLzma { get; private set; }
@@ -66,9 +68,9 @@ namespace de4dot.code.deobfuscators.ConfuserEx
                 {
                     _decryptedBytes = DecryptArray(method, aField.InitialValue);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-	                Console.WriteLine(e.Message);
+	                Console.WriteLine("ConfuserEx resource decryption failed: " + e.Message);
                     return;
                 }
                 
@@ -206,7 +208,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
                 var methods = type.GetMethods();
                 MethodInfo patchedMethod = methods.First(m => m.IsPublic && m.IsStatic);
                 byte[] decryptedBytes = (byte[]) patchedMethod.Invoke(null, new object[]{encryptedArray});
-                return Lzma.Decompress(decryptedBytes);
+                return Lzma.Decompress(decryptedBytes, _isNewLzma);
             }
         }
 
@@ -234,6 +236,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
                 return false;
             if (instr[4].Operand.ToString() != "System.Boolean System.String::op_Equality(System.String,System.String)")
                 return false;
+            /* These blocks may be swapped (brtrue instead of brfalse)
             if (!instr[5].IsBrfalse())
                 return false;
             if (instr[6].OpCode != OpCodes.Ldsfld)
@@ -245,7 +248,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (instr[8].OpCode != OpCodes.Ldnull)
                 return false;
             if (instr[9].OpCode != OpCodes.Ret)
-                return false;
+                return false;*/
             
             return true;
         }
@@ -265,12 +268,12 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             var toRemove = new List<Resource>();
             var toAdd = new List<Resource>();
             foreach (var cryptedResource in _module.Resources)
-            foreach (var resource in newModule.Resources)
-                if (cryptedResource.Name == resource.Name)
-                {
-                    toRemove.Add(cryptedResource);
-                    toAdd.Add(resource);
-                }
+	            foreach (var resource in newModule.Resources)
+	                if (cryptedResource.Name == resource.Name)
+	                {
+	                    toRemove.Add(cryptedResource);
+	                    toAdd.Add(resource);
+	                }
 
             foreach (var resToRemove in toRemove)
                 _module.Resources.Remove(resToRemove);

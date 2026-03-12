@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using de4dot.blocks;
 using dnlib.DotNet;
@@ -23,6 +23,8 @@ namespace de4dot.code.deobfuscators.ConfuserEx
         public List<TypeDef> Types { get; } = new List<TypeDef>();
 
         public bool FoundLzma => Method != null && Types.Count != 0;
+
+        public bool IsNewSizeCode { get; private set; }
 
         public void Find()
         {
@@ -75,20 +77,57 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (!instructions[i++].IsStloc()) //byte[] buffer = new byte[5];
                 return false;
 
-            if (!instructions[i++].IsLdloc())
-                return false;
-            if (!instructions[i++].IsLdloc())
-                return false;
-            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 0)
-                return false;
-            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 5)
-                return false;
-            if (instructions[i].OpCode != OpCodes.Callvirt || instructions[i++].Operand.ToString() !=
-                "System.Int32 System.IO.Stream::Read(System.Byte[],System.Int32,System.Int32)")
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Pop) //memoryStream.Read(buffer, 0, 5);
-                return false;
+            if (instructions[i].IsLdloc())
+            {
+	            // Old ConfuserEx
+	            i++;
+	            if (!instructions[i++].IsLdloc())
+		            return false;
+	            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 0)
+		            return false;
+	            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 5)
+		            return false;
+	            if (instructions[i].OpCode != OpCodes.Callvirt || instructions[i++].Operand.ToString() !=
+	                "System.Int32 System.IO.Stream::Read(System.Byte[],System.Int32,System.Int32)")
+		            return false;
+	            if (instructions[i++].OpCode != OpCodes.Pop) //memoryStream.Read(buffer, 0, 5);
+		            return false;
+            }
+            else if (instructions[i].IsLdcI4() && instructions[i++].GetLdcI4Value() == 0)
+            {
+	            // Confuser.Core
+	            /* var readCnt = 0;
+	               while (readCnt < 5) {
+	                 readCnt += s.Read(prop, readCnt, 5 - readCnt);
+	               }
+	            */
+	            if (!instructions[i++].IsStloc()) // readCnt = 0
+		            return false;
+	            IsNewSizeCode = true;
+	            if (instructions[i].IsLdloc() && instructions[i + 1].IsLdcI4() &&
+	                instructions[i + 1].GetLdcI4Value() == 5)
+	            {
+		            i += 3; // skip loop cond "readCnt < 5", i+2 is blt.s
+	            }
+	            else if (instructions[i++].OpCode == OpCodes.Br_S) {
+		            // loop body and loop cond are swapped
+		            if (!instructions[i++].IsLdloc())
+			            return false;
+		            if (!instructions[i++].IsLdloc())
+			            return false;
+		            if (!instructions[i++].IsLdloc())
+			            return false;
+		            if (!instructions[i++].IsLdloc())
+			            return false;
+		            i += 9;
+	            }
+	            else
+		            return false;
+            }
+            else
+	            return false;
 
+            // decoder.SetDecoderProperties(prop);
             if (!instructions[i++].IsLdloc())
                 return false;
             if (!instructions[i++].IsLdloc())
@@ -96,46 +135,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (instructions[i++].OpCode != OpCodes.Callvirt) //@class.method_5(buffer);
                 return false;
 
-            firstInstruction =
-                instructions.FirstOrDefault(
-                    instr =>
-                        instr.OpCode == OpCodes.Callvirt &&
-                        instr.Operand.ToString() == "System.Int32 System.IO.Stream::ReadByte()");
-
-            if (firstInstruction == null)
-                return false;
-            if (i >= instructions.IndexOf(firstInstruction))
-                return false;
-
-            i = instructions.IndexOf(firstInstruction) + 1;
-
-            if (!instructions[i++].IsStloc()) //int num2 = memoryStream.ReadByte();
-                return false;
-
-            if (!instructions[i++].IsLdloc())
-                return false;
-            if (!instructions[i++].IsLdloc())
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Conv_U1)
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Conv_U8)
-                return false;
-            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 8)
-                return false;
-            if (!instructions[i++].IsLdloc())
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Mul)
-                return false;
-            if (!instructions[i].IsLdcI4() || instructions[i++].GetLdcI4Value() != 0x3F)
-                return false;
-            if (instructions[i++].OpCode != OpCodes.And)
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Shl)
-                return false;
-            if (instructions[i++].OpCode != OpCodes.Or)
-                return false;
-            if (!instructions[i++].IsStloc()) //num |= (long)((long)((ulong)((byte)num2)) << 8 * i);
-                return false;
+            // Middle part where length is read is not verified (varies between ConfuserEx and Confuser.Core)
 
             firstInstruction =
                 instructions.FirstOrDefault(
@@ -159,11 +159,9 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (instructions[i].OpCode != OpCodes.Callvirt || instructions[i++].Operand.ToString() !=
                 "System.Int64 System.IO.Stream::get_Length()")
                 return false;
-            if (instructions[i].OpCode != OpCodes.Ldc_I8 || (long) instructions[i++].Operand != 13L)
+            if (instructions[i].OpCode != OpCodes.Ldc_I8 || (long)instructions[i++].Operand is not (13 or 5 or 9))
                 return false;
             if (instructions[i++].OpCode != OpCodes.Sub)
-                return false;
-            if (!instructions[i++].IsStloc()) //long long_ = memoryStream.Length - 13L;
                 return false;
 
             return true;

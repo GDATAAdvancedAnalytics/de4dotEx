@@ -150,10 +150,11 @@ namespace de4dot.code.deobfuscators.ConfuserEx
         {
             var ret = new MethodDefUser(origin.Name, origin.MethodSig, origin.ImplAttributes, origin.Attributes);
 
-            foreach (GenericParam genericParam in origin.GenericParameters)
+            foreach (var genericParam in origin.GenericParameters)
                 ret.GenericParameters.Add(new GenericParamUser(genericParam.Number, genericParam.Flags, "-"));
 
-            ret.Body = origin.Body;
+            ret.Body = new CilBody();
+            DotNetUtils.CopyBodyFromTo(origin, ret);
             return ret;
         }
         
