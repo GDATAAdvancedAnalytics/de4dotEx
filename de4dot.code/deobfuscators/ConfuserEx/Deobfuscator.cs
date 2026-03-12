@@ -54,7 +54,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 
 			private bool _canRemoveLzma = true;
 			private ConstantsDecrypter _constantDecrypter;
-			private bool _detectedConfuserExAttribute, _detectedConfuserCore, _deobfuscating;
+			private bool _detectedConfuserExAttribute, _deobfuscating;
 			private LzmaFinder _lzmaFinder;
 			private ProxyCallFixer _proxyCallFixer;
 			private ResourceDecrypter _resourceDecrypter;
@@ -108,8 +108,8 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 				_lzmaFinder = new LzmaFinder(module, DeobfuscatedFile);
 				_lzmaFinder.Find();
 
-				_constantDecrypter = new ConstantsDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _detectedConfuserCore);
-				_resourceDecrypter = new ResourceDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _detectedConfuserCore);
+				_constantDecrypter = new ConstantsDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _lzmaFinder.IsNewSizeCode);
+				_resourceDecrypter = new ResourceDecrypter(module, _lzmaFinder.Method, DeobfuscatedFile, _lzmaFinder.IsNewSizeCode);
 
 				if (_lzmaFinder.FoundLzma)
 				{
@@ -136,7 +136,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 						if (!value.Contains("ConfuserEx") && !value.Contains("Confuser.Core"))
 							continue;
 						_detectedConfuserExAttribute = true;
-						_detectedConfuserCore = value.Contains("Confuser.Core");
 						_version = value.Replace("ConfuserEx", "").Replace("Confuser.Core", "").Trim();
 						return;
 					}

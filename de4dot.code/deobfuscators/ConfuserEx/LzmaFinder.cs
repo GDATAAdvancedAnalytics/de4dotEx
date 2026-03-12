@@ -24,6 +24,8 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 
         public bool FoundLzma => Method != null && Types.Count != 0;
 
+        public bool IsNewSizeCode { get; private set; }
+
         public void Find()
         {
             var moduleType = DotNetUtils.GetModuleType(_module);
@@ -101,6 +103,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 	            */
 	            if (!instructions[i++].IsStloc()) // readCnt = 0
 		            return false;
+	            IsNewSizeCode = true;
 	            if (instructions[i].IsLdloc() && instructions[i + 1].IsLdcI4() &&
 	                instructions[i + 1].GetLdcI4Value() == 5)
 	            {
