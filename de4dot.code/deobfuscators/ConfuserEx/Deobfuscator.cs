@@ -208,6 +208,9 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 							toRemoveFromCctor.Add(_constantDecrypter.Method);
 							AddMethodToBeRemoved(_constantDecrypter.Method, "Constant Decrypter Initializer");
 						}
+						else {
+							_constantDecrypter.RemoveInlinedInitCode();
+						}
 						foreach (var dec in _constantDecrypter.Decrypters)
 							AddMethodToBeRemoved(dec.Method, "Constant Decrypter Method");
 						AddFieldsToBeRemoved(_constantDecrypter.Fields, "Constant Decrypter Fields");

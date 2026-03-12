@@ -116,7 +116,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 
         private byte[] _decryptedBytes;
         private FieldDef _decryptedField, _arrayField;
-        private readonly List<int> _inlinedRemoval = new();
         internal TypeDef ArrayType;
 
         public ConstantsDecrypter(ModuleDef module, MethodDef lzmaMethod, ISimpleDeobfuscator deobfsucator, bool isNewLzma)
@@ -166,14 +165,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 	                "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)"))
 	            if (ProcessPossibleInitMethod(moduleCctor, moduleCctor)) {
 		            MethodIsInlined = true;
-
-		            // Somewhat dirty, but doing it later would require finding everything again because indexes change.
-		            // If everything was found and array decryption succeeded, we can be pretty sure this is Confuser.Core anyway.
-		            _inlinedRemoval.Reverse();
-		            foreach (var index in _inlinedRemoval) {
-			            Method.Body.Instructions.RemoveAt(index);
-		            }
-		            _inlinedRemoval.Clear();
 	            }
         }
 
@@ -188,7 +179,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 	        }
 	        catch (Exception e)
 	        {
-		        Console.WriteLine("ConfuserEx str decrypter found, but decryption failed: " + e.Message);
+		        Console.WriteLine("ConfuserEx const decrypter found, but decryption failed: " + e.Message);
 		        return false;
 	        }
 
@@ -201,6 +192,15 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 	        return true;
         }
 
+        private static int FindDecrypterStart(IList<Instruction> instructions) {
+	        for (int i = 0; i < 10; i++) {
+		        if (instructions[i].IsLdcI4() && instructions[i + 1].IsStloc() && instructions[i + 2].IsLdcI4()) {
+			        return i;
+		        }
+	        }
+	        return -1;
+        }
+
         private bool IsStringDecrypterInit(MethodDef method, out FieldDef aField, out FieldDef dField, out int iStart, out int iEnd)
         {
             aField = null;
@@ -211,12 +211,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (instructions.Count < 15)
                 return false;
 
-            for (int i = 0; i < 10; i++) {
-	            if (instructions[i].IsLdcI4() && instructions[i + 1].IsStloc() && instructions[i + 2].IsLdcI4()) {
-		            iStart = i;
-		            break;
-	            }
-            }
+            iStart = FindDecrypterStart(instructions);
             if (iStart == -1)
 	            return false;
 
@@ -256,19 +251,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             if (instructions[iEnd - 1].Operand != _lzmaMethod)
 	            return false;
 
-            _inlinedRemoval.Clear();
-            for (int i = iStart; i <= iEnd; i++) {
-	            _inlinedRemoval.Add(i);
-            }
-            var branch = method.Body.Instructions.Skip(iEnd).FirstOrDefault(inst => inst.IsBr());
-            if (branch != null) {
-	            var branchIndex = method.Body.Instructions.IndexOf(branch);
-	            var branchTarget = method.Body.Instructions.IndexOf((Instruction)branch.Operand);
-	            for (int i = branchIndex + 1; i < branchTarget; i++) {
-		            _inlinedRemoval.Add(i);
-	            }
-            }
-
             return true;
         }
 
@@ -298,26 +280,11 @@ namespace de4dot.code.deobfuscators.ConfuserEx
 
             // Return decrypted array instead of doing decompress call.
             tempMethod.Body.Instructions[iEnd - 1].OpCode = OpCodes.Ret;
-            // Remove dead code.
-            Instruction branchTarget = null;
-            while (iEnd < tempMethod.Body.Instructions.Count) {
-	            var ins = tempMethod.Body.Instructions[iEnd];
-	            if (ins.IsBr()) {
-					// This is some IL-spaghetti situation where code that logically runs later is interleaved into the decryption.
-					branchTarget = (Instruction)ins.Operand;
-					tempMethod.Body.Instructions.RemoveAt(iEnd);
-					break;
-	            }
-	            tempMethod.Body.Instructions.RemoveAt(iEnd);
-            }
 
-            if (branchTarget != null) {
-				int i = tempMethod.Body.Instructions.IndexOf(branchTarget);
-				if (i < iEnd)
-					throw new Exception("Dead code branch points to front instead of end");
-				while (i < tempMethod.Body.Instructions.Count)
-					tempMethod.Body.Instructions.RemoveAt(i);
-            }
+            var blocks = new Blocks(tempMethod);
+            blocks.RemoveDeadBlocks();
+            blocks.GetCode(out var allInstructions, out var allExceptionHandlers);
+            DotNetUtils.RestoreBody(tempMethod, allInstructions, allExceptionHandlers);
 
             tempType.Methods.Add(tempMethod);
             tempModule.Types.Add(tempType);
@@ -334,6 +301,28 @@ namespace de4dot.code.deobfuscators.ConfuserEx
                 byte[] decryptedBytes = (byte[]) patchedMethod.Invoke(null, new object[]{encryptedArray});
                 return Lzma.Decompress(decryptedBytes, _isNewLzma);
             }
+        }
+
+        public void RemoveInlinedInitCode() {
+	        if (!MethodIsInlined)
+		        return;
+
+	        var instructions = Method.Body.Instructions;
+
+	        var iStart = FindDecrypterStart(instructions);
+	        if (iStart == -1)
+		        throw new Exception("Decryption start was found earlier but not anymore");
+
+	        var stsfld = instructions.First(ins => ins.OpCode == OpCodes.Stsfld && ins.Operand == _decryptedField);
+	        var target = instructions[instructions.IndexOf(stsfld) + 1];
+
+	        instructions[iStart].OpCode = OpCodes.Br;
+	        instructions[iStart].Operand = target;
+
+	        var blocks = new Blocks(Method);
+	        blocks.RemoveDeadBlocks();
+	        blocks.GetCode(out var allInstructions, out var allExceptionHandlers);
+	        DotNetUtils.RestoreBody(Method, allInstructions, allExceptionHandlers);
         }
 
         private IEnumerable<ConstantDecrypterBase> FindStringDecrypters(TypeDef type)
