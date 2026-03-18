@@ -329,7 +329,7 @@ namespace de4dot.code {
 		public void DeobfuscateBegin() {
 			inlineCandidate = new();
 			foreach (var m in GetAllMethods().Where(_ => _.HasBody && _.Body.HasInstructions)) {
-				if (m.IsStatic && m.Parameters.Count + 2 == m.Body.Instructions.Count) {
+				if (m.IsStatic && m.Parameters.Count + 2 == m.Body.Instructions.Count && !m.IsStaticConstructor) {
 					var callInstruction = m.Body.Instructions[m.Parameters.Count];
 					if (callInstruction.OpCode == OpCodes.Call || callInstruction.OpCode == OpCodes.Callvirt || callInstruction.OpCode == OpCodes.Newobj) {
 						bool isValidInlineTarget = true;
@@ -559,6 +559,7 @@ namespace de4dot.code {
 		public void DeobfuscateEnd() {
 			if (options.ControlFlowDeobfuscation) {
 				foreach (var m in inlineCandidate) {
+					Logger.v("Removing {0} ({1:X8}) due to inlining", m.Value, m.Value.MDToken.ToUInt32());
 					m.Value.DeclaringType?.Remove(m.Value);
 				}
 			}
