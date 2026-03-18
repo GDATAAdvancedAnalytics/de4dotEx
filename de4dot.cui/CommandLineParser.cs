@@ -154,9 +154,13 @@ namespace de4dot.cui {
 				defaultStringDecrypterMethods.Add(val);
 			}));
 			miscOptions.Add(new NoArgOption(null, "no-cflow-deob", "No control flow deobfuscation (NOT recommended)", () => {
+				if (newFileOptions != null)
+					ExitError("Please specify --no-cflow-deob before the file.");
 				filesOptions.ControlFlowDeobfuscation = false;
 			}));
 			miscOptions.Add(new NoArgOption(null, "only-cflow-deob", "Only control flow deobfuscation", () => {
+				if (newFileOptions != null)
+					ExitError("Please specify --only-cflow-deob before the file.");
 				filesOptions.ControlFlowDeobfuscation = true;
 				// --strtyp none
 				defaultStringDecrypterType = DecrypterType.None;
