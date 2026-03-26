@@ -645,7 +645,6 @@ namespace de4dot.code {
 			if (!HasNonEmptyBody(method))
 				return;
 
-			var rewritten = false;
 			foreach (var instr in method.Body.Instructions) {
 				if (instr.OpCode == OpCodes.Call) {
 					var targetMethod = (IMethod?)instr.Operand;
@@ -654,13 +653,8 @@ namespace de4dot.code {
 						var realCall = methodToInline.Body.Instructions[methodToInline.Parameters.Count];
 						instr.OpCode = realCall.OpCode;
 						instr.Operand = realCall.Operand;
-						rewritten = true;
 					}
 				}
-			}
-
-			if (rewritten) {	
-				method.Body.KeepOldMaxStack = true;
 			}
 
 			var blocks = new Blocks(method);
