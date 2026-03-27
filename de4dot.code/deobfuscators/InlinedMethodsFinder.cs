@@ -38,9 +38,11 @@ namespace de4dot.code.deobfuscators {
 						continue;
 					if (method.GenericParameters.Count > 0)
 						continue;
-					if (method.Name == ".cctor")
+					if (method.IsStaticConstructor)
 						continue;
 					if (method.Body == null)
+						continue;
+					if (method.IsGetter || method.IsSetter)
 						continue;
 					var instrs = method.Body.Instructions;
 					if (instrs.Count < 2)

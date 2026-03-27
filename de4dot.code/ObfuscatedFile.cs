@@ -329,7 +329,7 @@ namespace de4dot.code {
 		public void DeobfuscateBegin() {
 			inlineCandidate = new();
 			foreach (var m in GetAllMethods().Where(_ => _.HasBody && _.Body.HasInstructions)) {
-				if (m.IsStatic && m.Parameters.Count + 2 == m.Body.Instructions.Count && !m.IsStaticConstructor) {
+				if (m.IsStatic && m.Parameters.Count + 2 == m.Body.Instructions.Count && !m.IsStaticConstructor && !m.IsGetter && !m.IsSetter) {
 					var callInstruction = m.Body.Instructions[m.Parameters.Count];
 					if (callInstruction.OpCode == OpCodes.Call || callInstruction.OpCode == OpCodes.Callvirt || callInstruction.OpCode == OpCodes.Newobj) {
 						bool isValidInlineTarget = true;
