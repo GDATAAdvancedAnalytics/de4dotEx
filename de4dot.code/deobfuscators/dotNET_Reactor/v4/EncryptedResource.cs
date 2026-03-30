@@ -555,8 +555,10 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 
 				int count = emuEndIndex - emuStartIndex + 1;
 				instructions = new List<Instruction>(count);
-				for (int i = 0; i < count; i++)
-					instructions.Add(origInstrs[emuStartIndex + i].Clone());
+				for (int i = 0; i < count; i++) {
+					var ins = origInstrs[emuStartIndex + i];
+					instructions.Add(ins.Clone());
+				}
 
 				return true;
 			}
@@ -702,8 +704,30 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				instrEmulator.Initialize(method, method.Parameters, locals, method.Body.InitLocals, false);
 				instrEmulator.SetLocal(emuLocal, new Int32Value((int)input));
 
-				foreach (var instr in instructions)
-					instrEmulator.Emulate(instr);
+				foreach (var instr in instructions) {
+					if (instr.OpCode == OpCodes.Bne_Un || instr.OpCode == OpCodes.Bne_Un_S) {
+						/* The emulator doesn't handle branches, and some DNR builds have a zero-check branch gating a division
+						   //                         if (num12 == 0U)
+						   /* 0x00002E98 FE0C2900     * / IL_01E4: ldloc     V_41
+						   /* 0x00002E9C 16           * / IL_01E8: ldc.i4.0
+						   /* 0x00002E9D 400A000000   * / IL_01E9: bne.un    IL_01F8
+						   //                             num12 -= 1U;
+						   /* 0x00002EA2 FE0C2900     * / IL_01EE: ldloc     V_41
+						   /* 0x00002EA6 17           * / IL_01F2: ldc.i4.1
+						   /* 0x00002EA7 59           * / IL_01F3: sub
+						   /* 0x00002EA8 FE0E2900     * / IL_01F4: stloc     V_41
+						*/
+						var rhs = instrEmulator.Pop();
+						var lhs = instrEmulator.Pop();
+						if (rhs is Int32Value rhsInt && lhs is Int32Value lhsInt && rhsInt.IsZero() && lhsInt.IsZero()) {
+							var local = (Local)instructions[instructions.IndexOf(instr) - 2].Operand;
+							instrEmulator.SetLocal(local, new Int32Value(-1));
+						}
+					}
+					else {
+						instrEmulator.Emulate(instr);
+					}
+				}
 
 				var tos = instrEmulator.Pop() as Int32Value;
 				if (tos == null || !tos.AllBitsValid())
