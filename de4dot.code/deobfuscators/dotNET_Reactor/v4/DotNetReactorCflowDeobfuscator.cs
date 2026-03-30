@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using de4dot.blocks;
 using de4dot.blocks.cflow;
 using dnlib.DotNet;
@@ -6,24 +7,16 @@ using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 	class DotNetReactorCflowDeobfuscator : IBlocksDeobfuscator {
-		bool isContainsSwitch;
+		bool _hasSwitch;
 
 		public bool ExecuteIfNotModified { get; }
 
 		public void DeobfuscateBegin(Blocks blocks) {
-			var contains = false;
-			foreach (var instr in blocks.Method.Body.Instructions) {
-				if (instr.OpCode == OpCodes.Switch) {
-					contains = true;
-					break;
-				}
-			}
-
-			isContainsSwitch = contains;
+			_hasSwitch = blocks.Method.Body.Instructions.Any(instr => instr.OpCode == OpCodes.Switch);
 		}
 
 		public bool Deobfuscate(List<Block> allBlocks) {
-			if (!isContainsSwitch)
+			if (!_hasSwitch)
 				return false;
 
 			var modified = false;

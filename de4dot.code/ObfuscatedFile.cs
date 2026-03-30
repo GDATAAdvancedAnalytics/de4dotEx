@@ -609,7 +609,13 @@ namespace de4dot.code {
 			deob.DeobfuscateMethodBegin(blocks);
 			if (options.ControlFlowDeobfuscation) {
 				cflowDeobfuscator.Initialize(blocks);
-				cflowDeobfuscator.Deobfuscate();
+				try {
+					cflowDeobfuscator.Deobfuscate();
+				}
+				catch (Exception) {
+					Logger.e("Error during cflow deobfuscation of {0} ({1:X8})", Utils.RemoveNewlines(method), method.MDToken.ToUInt32());
+					throw;
+				}
 			}
 
 			if (deob.DeobfuscateOther(blocks) && options.ControlFlowDeobfuscation)
