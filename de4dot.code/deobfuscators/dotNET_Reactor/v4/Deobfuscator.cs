@@ -25,6 +25,7 @@ using dnlib.DotNet.Emit;
 using dnlib.DotNet.Writer;
 using de4dot.blocks;
 using de4dot.blocks.cflow;
+using de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 	public class DeobfuscatorInfo : DeobfuscatorInfoBase {
@@ -42,6 +43,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		BoolOption removeNamespaces;
 		BoolOption removeAntiStrongName;
 		BoolOption renameShort;
+		BoolOption devirtualize;
 
 		public DeobfuscatorInfo()
 			: base(DEFAULT_REGEX) {
@@ -55,6 +57,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			removeNamespaces = new BoolOption(null, MakeArgName("ns1"), "Clear namespace if there's only one class in it", true);
 			removeAntiStrongName = new BoolOption(null, MakeArgName("sn"), "Remove anti strong name code", true);
 			renameShort = new BoolOption(null, MakeArgName("sname"), "Rename short names", false);
+			devirtualize = new BoolOption(null, MakeArgName("devirtualize"), "Devirtualize methods", true);
 		}
 
 		public override string Name => THE_NAME;
@@ -73,6 +76,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				RemoveNamespaces = removeNamespaces.Get(),
 				RemoveAntiStrongName = removeAntiStrongName.Get(),
 				RenameShort = renameShort.Get(),
+				Devirtualize = devirtualize.Get(),
 			});
 
 		protected override IEnumerable<Option> GetOptionsInternal() =>
@@ -87,6 +91,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				removeNamespaces,
 				removeAntiStrongName,
 				renameShort,
+				devirtualize,
 			};
 	}
 
@@ -106,6 +111,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		AntiStrongName antiStrongname;
 		EmptyClass emptyClass;
 		ProxyCallFixer proxyCallFixer;
+		Devirtualizer devirtualizer;
 
 		bool unpackedNativeFile = false;
 		bool canRemoveDecrypterType = true;
@@ -122,6 +128,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			public bool RemoveNamespaces { get; set; }
 			public bool RemoveAntiStrongName { get; set; }
 			public bool RenameShort { get; set; }
+			public bool Devirtualize { get; set; }
 		}
 
 		public override string Type => DeobfuscatorInfo.THE_TYPE;
@@ -205,7 +212,8 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 					ToInt32(stringDecrypter.Detected) +
 					ToInt32(booleanDecrypter.Detected) +
 					ToInt32(assemblyResolver.Detected) +
-					ToInt32(resourceResolver.Detected);
+					ToInt32(resourceResolver.Detected) +
+					ToInt32(devirtualizer.Detected);
 			if (sum > 0)
 				val += 100 + 10 * (sum - 1);
 
@@ -222,6 +230,8 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			methodsDecrypter.Find();
 			proxyCallFixer = new ProxyCallFixer(module, DeobfuscatedFile);
 			proxyCallFixer.FindDelegateCreator(module);
+			devirtualizer = new Devirtualizer(DeobfuscatedFile, module);
+			devirtualizer.Find();
 			stringDecrypter = new StringDecrypter(module);
 			stringDecrypter.Find(DeobfuscatedFile);
 			booleanDecrypter = new BooleanDecrypter(module);
@@ -276,6 +286,12 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			4.3.1.0: (jitter)
 			+		"System.Byte&"
 			*/
+
+			if (devirtualizer.Detected) {
+				if (devirtualizer.StreamHasPrependedByte)
+					return DeobfuscatorInfo.THE_NAME + " >= 7.0"; // not sure when exactly this was introduced, might also be 7.3
+				return DeobfuscatorInfo.THE_NAME + " >= 6.2";
+			}
 
 			LocalTypes localTypes;
 			int minVer = -1;
@@ -430,6 +446,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			newOne.peImage = new MyPEImage(fileData);
 			newOne.methodsDecrypter = new MethodsDecrypter(module, methodsDecrypter);
 			newOne.proxyCallFixer = new ProxyCallFixer(module, proxyCallFixer);
+			newOne.devirtualizer = new Devirtualizer(module, devirtualizer);
 			newOne.stringDecrypter = new StringDecrypter(module, stringDecrypter);
 			newOne.booleanDecrypter = new BooleanDecrypter(module, booleanDecrypter);
 			newOne.assemblyResolver = new AssemblyResolver(module, assemblyResolver);
@@ -510,6 +527,10 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			proxyCallFixer.Find();
 			proxyCallFixer.DeobfuscateAll();
 
+			if (devirtualizer.Detected && options.Devirtualize)
+				devirtualizer.Devirtualize();
+
+			// Inlines '<Module>{7212c6df-0f39-43d5-b7b8-3f24c0ebccff}'::m_1b8cd98d5e234215af7340e19a570660 references.
 			var cflowInliner = new CflowConstantsInliner(module, DeobfuscatedFile);
 			cflowInliner.InlineAllConstants();
 			AddTypeToBeRemoved(cflowInliner.Type, "Cflow constants type");
@@ -685,6 +706,11 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				AddTypeToBeRemoved(decrypterType, "Decrypter type");
 			else
 				Logger.v("Could not remove decrypter type");
+
+			if (devirtualizer.CanRemoveType) {
+				AddTypeToBeRemoved(devirtualizer.VMType, "VM type");
+				AddResourceToBeRemoved(devirtualizer.Resource, "VM resource");
+			}
 
 			FixEntryPoint();
 
