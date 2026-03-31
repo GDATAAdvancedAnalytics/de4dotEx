@@ -38,18 +38,13 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 								continue;
 							if (i + 1 >= instrs.Count)
 								continue;
-							var stsfld = instrs[i + 1];
-							if (stsfld.OpCode.Code != Code.Stsfld)
+							var store = instrs[i + 1];
+							if (store.OpCode.Code is not (Code.Stsfld or Code.Stfld))
 								continue;
-							var key = stsfld.Operand as FieldDef;
-							if (key == null)
+							if (store.Operand is not FieldDef key)
 								continue;
 
-							var value = ldcI4.GetLdcI4Value();
-							if (!dictionary.ContainsKey(key))
-								dictionary.Add(key, value);
-							else
-								dictionary[key] = value;
+							dictionary[key] = ldcI4.GetLdcI4Value();
 						}
 
 						if (dictionary.Count < 100) {
@@ -76,14 +71,21 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 					var instrs = method.Body.Instructions;
 
 					for (var i = 0; i < instrs.Count; i++) {
-						var ldsfld = instrs[i];
-						if (ldsfld.OpCode.Code != Code.Ldsfld)
+						bool nopNext = false;
+						var load = instrs[i];
+						if (load.OpCode.Code != Code.Ldsfld)
 							continue;
-						var ldsfldValue = ldsfld.Operand as FieldDef;
-						if (ldsfldValue == null)
+						if (i < instrs.Count - 1 && instrs[i + 1].OpCode.Code == Code.Ldfld) {
+							load = instrs[i + 1];
+							nopNext = true;
+						}
+						if (load.Operand is not FieldDef loadField)
 							continue;
-						if (dictionary.TryGetValue(ldsfldValue, out var value))
+						if (dictionary.TryGetValue(loadField, out var value)) {
 							instrs[i] = Instruction.CreateLdcI4(value);
+							if (nopNext)
+								instrs[i + 1] = Instruction.Create(OpCodes.Nop);
+						}
 					}
 				}
 			}
