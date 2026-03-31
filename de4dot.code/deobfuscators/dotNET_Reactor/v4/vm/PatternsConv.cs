@@ -24,8 +24,8 @@ using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
-record ConvPattern : IPattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+abstract record ConvPattern : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -47,9 +47,9 @@ record ConvPattern : IPattern {
 	internal const int CallIndex = 10;
 }
 
-internal record ConvI1 : ConvPattern, IOpcodePattern {
+internal record ConvI1 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -58,18 +58,18 @@ internal record ConvI1 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_I1;
+	public override OpCode Opcode => OpCodes.Conv_I1;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvU1 : ConvPattern, IOpcodePattern {
+internal record ConvU1 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -78,18 +78,18 @@ internal record ConvU1 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_U1;
+	public override OpCode Opcode => OpCodes.Conv_U1;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvI2 : ConvPattern, IOpcodePattern {
+internal record ConvI2 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -98,18 +98,18 @@ internal record ConvI2 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_I2;
+	public override OpCode Opcode => OpCodes.Conv_I2;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvU2 : ConvPattern, IOpcodePattern {
+internal record ConvU2 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -118,18 +118,18 @@ internal record ConvU2 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_U2;
+	public override OpCode Opcode => OpCodes.Conv_U2;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvI4 : ConvPattern, IOpcodePattern {
+internal record ConvI4 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -138,18 +138,18 @@ internal record ConvI4 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_I4;
+	public override OpCode Opcode => OpCodes.Conv_I4;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvU4 : ConvPattern, IOpcodePattern {
+internal record ConvU4 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -158,18 +158,18 @@ internal record ConvU4 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_U4;
+	public override OpCode Opcode => OpCodes.Conv_U4;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvI8 : ConvPattern, IOpcodePattern {
+internal record ConvI8 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -178,18 +178,18 @@ internal record ConvI8 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_I8;
+	public override OpCode Opcode => OpCodes.Conv_I8;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvU8 : ConvPattern, IOpcodePattern {
+internal record ConvU8 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldfld,
@@ -198,18 +198,18 @@ internal record ConvU8 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_U8;
+	public override OpCode Opcode => OpCodes.Conv_U8;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvR4 : ConvPattern, IOpcodePattern {
+internal record ConvR4 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -218,18 +218,18 @@ internal record ConvR4 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_R4;
+	public override OpCode Opcode => OpCodes.Conv_R4;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvR8 : ConvPattern, IOpcodePattern {
+internal record ConvR8 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -238,20 +238,20 @@ internal record ConvR8 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_R8;
+	public override OpCode Opcode => OpCodes.Conv_R8;
 
-	public bool Verify(IList<Instruction> instructions) {
+	public override bool Verify(IList<Instruction> instructions) {
 
 		return (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 	}
 }
 
-internal record ConvRUn : ConvPattern, IOpcodePattern {
+internal record ConvRUn : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -261,18 +261,18 @@ internal record ConvRUn : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_R_Un;
+	public override OpCode Opcode => OpCodes.Conv_R_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI1 : ConvPattern, IOpcodePattern {
+internal record ConvOvfI1 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -282,18 +282,18 @@ internal record ConvOvfI1 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I1;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I1;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI1Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfI1Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -303,18 +303,18 @@ internal record ConvOvfI1Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I1_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I1_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU1 : ConvPattern, IOpcodePattern {
+internal record ConvOvfU1 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -324,18 +324,18 @@ internal record ConvOvfU1 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U1;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U1;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU1Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfU1Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -345,18 +345,18 @@ internal record ConvOvfU1Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U1_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U1_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI2 : ConvPattern, IOpcodePattern {
+internal record ConvOvfI2 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -366,18 +366,18 @@ internal record ConvOvfI2 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I2;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I2;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI2Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfI2Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -387,18 +387,18 @@ internal record ConvOvfI2Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I2_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I2_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU2 : ConvPattern, IOpcodePattern {
+internal record ConvOvfU2 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -408,18 +408,18 @@ internal record ConvOvfU2 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U2;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U2;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU2Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfU2Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -429,18 +429,18 @@ internal record ConvOvfU2Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U2_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U2_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI4 : ConvPattern, IOpcodePattern {
+internal record ConvOvfI4 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -450,18 +450,18 @@ internal record ConvOvfI4 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I4;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I4;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfI4Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfI4Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -471,18 +471,18 @@ internal record ConvOvfI4Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_I4_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_I4_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU4 : ConvPattern, IOpcodePattern {
+internal record ConvOvfU4 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -492,18 +492,18 @@ internal record ConvOvfU4 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U4;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U4;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU4Un : ConvPattern, IOpcodePattern {
+internal record ConvOvfU4Un : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -513,18 +513,18 @@ internal record ConvOvfU4Un : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U4_Un;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U4_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 
-internal record ConvOvfU8 : ConvPattern, IOpcodePattern {
+internal record ConvOvfU8 : ConvPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -534,12 +534,12 @@ internal record ConvOvfU8 : ConvPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Conv_Ovf_U8;
+	public override OpCode Opcode => OpCodes.Conv_Ovf_U8;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverridesCall(new Inner());
 }
 

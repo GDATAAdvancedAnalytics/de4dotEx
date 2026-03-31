@@ -25,7 +25,7 @@ using dnlib.DotNet.Emit;
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
 internal record Br : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldarg_0,
@@ -37,12 +37,12 @@ internal record Br : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Br;
+	public override OpCode Opcode => OpCodes.Br;
 }
 
 internal record Brtrue : IOpcodePattern
 {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -63,12 +63,12 @@ internal record Brtrue : IOpcodePattern
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Brtrue;
+	public override OpCode Opcode => OpCodes.Brtrue;
 }
 
 internal record Brfalse : IOpcodePattern
 {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldc_I4_0,
 		OpCodes.Stloc_S,
@@ -97,12 +97,12 @@ internal record Brfalse : IOpcodePattern
 		OpCodes.Stloc_S
 	};
 
-	public OpCode Opcode => OpCodes.Brfalse;
+	public override OpCode Opcode => OpCodes.Brfalse;
 }
 
 // Used for all except beq, bne.un, bgt.un, blt.un
-record CondBranchPattern : IPattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+abstract record CondBranchPattern : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -129,7 +129,7 @@ record CondBranchPattern : IPattern {
 }
 
 internal record Beq : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -152,7 +152,7 @@ internal record Beq : IOpcodePattern {
 	};
 
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -164,17 +164,17 @@ internal record Beq : IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Beq;
+	public override OpCode Opcode => OpCodes.Beq;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[8].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
 internal record BneUn : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -195,7 +195,7 @@ internal record BneUn : IOpcodePattern {
 	};
 
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldloc_S,
 			OpCodes.Ceq,
@@ -203,18 +203,18 @@ internal record BneUn : IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Bne_Un;
+	public override OpCode Opcode => OpCodes.Bne_Un;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[6].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Bge : CondBranchPattern, IOpcodePattern {
+internal record Bge : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -228,18 +228,18 @@ internal record Bge : CondBranchPattern, IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Bge;
+	public override OpCode Opcode => OpCodes.Bge;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record BgeUn : CondBranchPattern, IOpcodePattern {
+internal record BgeUn : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -253,18 +253,18 @@ internal record BgeUn : CondBranchPattern, IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Bge_Un;
+	public override OpCode Opcode => OpCodes.Bge_Un;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Bgt : CondBranchPattern, IOpcodePattern {
+internal record Bgt : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -276,17 +276,17 @@ internal record Bgt : CondBranchPattern, IOpcodePattern {
 			OpCodes.Cgt,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Bgt;
+	public override OpCode Opcode => OpCodes.Bgt;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
 internal record BgtUn : IOpcodePattern {  // UNSURE
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -332,12 +332,12 @@ internal record BgtUn : IOpcodePattern {  // UNSURE
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Bgt_Un;
+	public override OpCode Opcode => OpCodes.Bgt_Un;
 }
 
-internal record Ble : CondBranchPattern, IOpcodePattern {
+internal record Ble : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -351,18 +351,18 @@ internal record Ble : CondBranchPattern, IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Ble;
+	public override OpCode Opcode => OpCodes.Ble;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record BleUn : CondBranchPattern, IOpcodePattern {
+internal record BleUn : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -376,18 +376,18 @@ internal record BleUn : CondBranchPattern, IOpcodePattern {
 			OpCodes.Ceq,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Ble_Un;
+	public override OpCode Opcode => OpCodes.Ble_Un;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Blt : CondBranchPattern, IOpcodePattern {
+internal record Blt : CondBranchPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -399,12 +399,12 @@ internal record Blt : CondBranchPattern, IOpcodePattern {
 			OpCodes.Clt,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Blt;
+	public override OpCode Opcode => OpCodes.Blt;
 
-	public bool Verify(IList<Instruction> instructions) =>
+	public override bool Verify(IList<Instruction> instructions) =>
 		(instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 

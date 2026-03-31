@@ -28,7 +28,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 // HandlerMapper applies normalization to guarantee matches even if blocks are laid out differently.
 
 internal record Callvirt : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldc_I4_0,
@@ -36,11 +36,11 @@ internal record Callvirt : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Callvirt;
+	public override OpCode Opcode => OpCodes.Callvirt;
 }
 
 internal record Call : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldc_I4_1,
@@ -48,11 +48,11 @@ internal record Call : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Call;
+	public override OpCode Opcode => OpCodes.Call;
 }
 
 internal record Ceq : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -79,11 +79,11 @@ internal record Ceq : IOpcodePattern {
 		OpCodes.Callvirt,
 		OpCodes.Ret
 	};
-	public OpCode Opcode => OpCodes.Ceq;
+	public override OpCode Opcode => OpCodes.Ceq;
 }
 
 internal record Dup : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -94,11 +94,11 @@ internal record Dup : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Dup;
+	public override OpCode Opcode => OpCodes.Dup;
 }
 
 internal record Ldarg : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -114,12 +114,12 @@ internal record Ldarg : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldarg;
+	public override OpCode Opcode => OpCodes.Ldarg;
 }
 
 // Before 7.0?
 internal record LdargOld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -133,11 +133,11 @@ internal record LdargOld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldarg;
+	public override OpCode Opcode => OpCodes.Ldarg;
 }
 
-internal abstract record Ldc {
-	public IList<OpCode> Pattern => new List<OpCode>
+internal abstract record Ldc : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -151,31 +151,31 @@ internal abstract record Ldc {
 
 	protected abstract string TypeName { get; }
 
-	public bool Verify(IList<Instruction> instructions) => ((TypeRef)instructions[4].Operand).FullName == TypeName;
+	public override bool Verify(IList<Instruction> instructions) => ((TypeRef)instructions[4].Operand).FullName == TypeName;
 }
 
-internal record LdcI4 : Ldc, IOpcodePattern {
+internal record LdcI4 : Ldc {
 	protected override string TypeName => "System.Int32";
-	public OpCode Opcode => OpCodes.Ldc_I4;
+	public override OpCode Opcode => OpCodes.Ldc_I4;
 }
 
-internal record LdcI8 : Ldc, IOpcodePattern {
+internal record LdcI8 : Ldc {
 	protected override string TypeName => "System.Int64";
-	public OpCode Opcode => OpCodes.Ldc_I8;
+	public override OpCode Opcode => OpCodes.Ldc_I8;
 }
 
-internal record LdcR4 : Ldc, IOpcodePattern {
+internal record LdcR4 : Ldc {
 	protected override string TypeName => "System.Single";
-	public OpCode Opcode => OpCodes.Ldc_R4;
+	public override OpCode Opcode => OpCodes.Ldc_R4;
 }
 
-internal record LdcR8 : Ldc, IOpcodePattern {
+internal record LdcR8 : Ldc {
 	protected override string TypeName => "System.Double";
-	public OpCode Opcode => OpCodes.Ldc_R8;
+	public override OpCode Opcode => OpCodes.Ldc_R8;
 }
 
 internal record Ldlen : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -194,11 +194,11 @@ internal record Ldlen : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldlen;
+	public override OpCode Opcode => OpCodes.Ldlen;
 }
 
 internal record Ldloc : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -216,11 +216,11 @@ internal record Ldloc : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldloc;
+	public override OpCode Opcode => OpCodes.Ldloc;
 }
 
 internal record LdlocOld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -236,11 +236,11 @@ internal record LdlocOld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldloc;
+	public override OpCode Opcode => OpCodes.Ldloc;
 }
 
 internal record Ldnull : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -250,11 +250,11 @@ internal record Ldnull : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldnull;
+	public override OpCode Opcode => OpCodes.Ldnull;
 }
 
 internal record Ldsfld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -273,11 +273,11 @@ internal record Ldsfld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldsfld;
+	public override OpCode Opcode => OpCodes.Ldsfld;
 }
 
 internal record LdsfldOld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -301,11 +301,11 @@ internal record LdsfldOld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ldsfld;
+	public override OpCode Opcode => OpCodes.Ldsfld;
 }
 
 internal record Ldstr : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldsfld,
 		OpCodes.Callvirt,   // callvirt System.Int32 System.Collections.Generic.List`1<System.String>::get_Count()
@@ -321,12 +321,12 @@ internal record Ldstr : IOpcodePattern {
 		OpCodes.Callvirt,
 		OpCodes.Ret
 	};
-	public bool MatchAnywhere => true; // lower half of pattern differs between versions
-	public OpCode Opcode => OpCodes.Ldstr;
+	public override bool MatchAnywhere => true; // lower half of pattern differs between versions
+	public override OpCode Opcode => OpCodes.Ldstr;
 }
 
 internal record Ldtoken : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldloc_S,
 		OpCodes.Nop,       // callvirt ResolveType() - new builds call an internal helper method
@@ -340,12 +340,12 @@ internal record Ldtoken : IOpcodePattern {
 		OpCodes.Callvirt,  // Push()
 		OpCodes.Ret
 	};
-	public bool MatchAnywhere => true;
-	public OpCode Opcode => OpCodes.Ldtoken;
+	public override bool MatchAnywhere => true;
+	public override OpCode Opcode => OpCodes.Ldtoken;
 }
 
 internal record Leave : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldarg_0,
@@ -359,11 +359,11 @@ internal record Leave : IOpcodePattern {
 		OpCodes.Stfld,
 		OpCodes.Ret
 	};
-	public OpCode Opcode => OpCodes.Leave;
+	public override OpCode Opcode => OpCodes.Leave;
 }
 
 internal record Newarr : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -388,11 +388,11 @@ internal record Newarr : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Newarr;
+	public override OpCode Opcode => OpCodes.Newarr;
 }
 
 internal record NewarrOld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -422,12 +422,12 @@ internal record NewarrOld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Newarr;
+	public override OpCode Opcode => OpCodes.Newarr;
 }
 
 internal record Newobj : IOpcodePattern {
 	// Partial pattern
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -444,12 +444,12 @@ internal record Newobj : IOpcodePattern {
 		OpCodes.Newarr
 	};
 
-	public OpCode Opcode => OpCodes.Newobj;
+	public override OpCode Opcode => OpCodes.Newobj;
 }
 
 internal record NewobjOld : IOpcodePattern {
 	// Partial pattern
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -471,19 +471,19 @@ internal record NewobjOld : IOpcodePattern {
 		OpCodes.Newarr
 	};
 
-	public OpCode Opcode => OpCodes.Newobj;
+	public override OpCode Opcode => OpCodes.Newobj;
 }
 
 internal record Nop : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ret
 	};
-	public OpCode Opcode => OpCodes.Nop;
+	public override OpCode Opcode => OpCodes.Nop;
 }
 
 internal record Pop : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // ldfld    System.Object VM/VMExecution::Stack
@@ -492,12 +492,12 @@ internal record Pop : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Pop;
+	public override OpCode Opcode => OpCodes.Pop;
 }
 
 internal record Ret : IOpcodePattern
 {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldc_I4_S, // ldc.i4.s -3
@@ -515,11 +515,11 @@ internal record Ret : IOpcodePattern
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Ret;
+	public override OpCode Opcode => OpCodes.Ret;
 }
 
 internal record Stelem : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -551,11 +551,11 @@ internal record Stelem : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Stelem;
+	public override OpCode Opcode => OpCodes.Stelem;
 }
 
 internal record Stfld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode> {
+	public override IList<OpCode> Pattern => new List<OpCode> {
 		OpCodes.Callvirt,  // callvirt System.Void System.Reflection.FieldInfo::SetValue(System.Object,System.Object)
 		OpCodes.Ret,
 		OpCodes.Ldloc_S,
@@ -585,12 +585,12 @@ internal record Stfld : IOpcodePattern {
 		OpCodes.Newobj,
 		OpCodes.Throw
 	};
-	public bool MatchAnywhere => true;
-	public OpCode Opcode => OpCodes.Stfld;
+	public override bool MatchAnywhere => true;
+	public override OpCode Opcode => OpCodes.Stfld;
 }
 
 internal record Stloc : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -620,11 +620,11 @@ internal record Stloc : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Stloc;
+	public override OpCode Opcode => OpCodes.Stloc;
 }
 
 internal record Stsfld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -645,11 +645,11 @@ internal record Stsfld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Stsfld;
+	public override OpCode Opcode => OpCodes.Stsfld;
 }
 
 internal record StsfldOld : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -675,12 +675,12 @@ internal record StsfldOld : IOpcodePattern {
 		OpCodes.Ret
 	};
 
-	public OpCode Opcode => OpCodes.Stsfld;
+	public override OpCode Opcode => OpCodes.Stsfld;
 }
 
 internal record Switch : IOpcodePattern {
 	// Partial pattern
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -699,11 +699,11 @@ internal record Switch : IOpcodePattern {
 		OpCodes.Ldloc_S,
 	};
 
-	public OpCode Opcode => OpCodes.Switch;
+	public override OpCode Opcode => OpCodes.Switch;
 }
 
 internal record Throw : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // ldfld    System.Object VM/VMExecution::Stack
@@ -714,5 +714,5 @@ internal record Throw : IOpcodePattern {
 		OpCodes.Throw
 	};
 
-	public OpCode Opcode => OpCodes.Throw;
+	public override OpCode Opcode => OpCodes.Throw;
 }

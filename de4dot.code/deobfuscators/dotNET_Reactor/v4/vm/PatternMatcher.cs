@@ -39,12 +39,12 @@ internal class PatternMatcher
 		_opcodes = new Dictionary<int, IOpcodePattern>();
 		_opcodePatterns = new List<IOpcodePattern>();
 		foreach (var type in typeof(PatternMatcher).Assembly.GetTypes())
-			if (type.GetInterface(nameof(IOpcodePattern)) != null)
+			if (!type.IsAbstract && typeof(IOpcodePattern).IsAssignableFrom(type))
 				if (Activator.CreateInstance(type) is IOpcodePattern instance)
 					_opcodePatterns.Add(instance);
 	}
 
-	public IOpcodePattern? GetOpcode(int vmOpcode) => _opcodes.GetValueOrDefault(vmOpcode);
+	public IOpcodePattern? GetOpcode(int vmOpcode) => _opcodes.TryGetValue(vmOpcode, out var res) ? res : null; // net48 compat
 
 	public void MatchAll(HandlerMapper mapper) {
 		int numMatched = 0;

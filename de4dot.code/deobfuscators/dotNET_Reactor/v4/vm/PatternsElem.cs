@@ -24,8 +24,8 @@ using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
-internal abstract record Ldelem {
-	public IList<OpCode> Pattern => new List<OpCode>
+internal abstract record Ldelem : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -56,56 +56,56 @@ internal abstract record Ldelem {
 
 	protected abstract string TypeName { get; }
 
-	public bool Verify(IList<Instruction> instructions) => ((TypeRef)instructions[19].Operand).FullName == TypeName;
+	public override bool Verify(IList<Instruction> instructions) => ((TypeRef)instructions[19].Operand).FullName == TypeName;
 }
 
-internal record LdelemU1 : Ldelem, IOpcodePattern {
+internal record LdelemU1 : Ldelem {
 	protected override string TypeName => "System.Byte";
-	public OpCode Opcode => OpCodes.Ldelem_U1;
+	public override OpCode Opcode => OpCodes.Ldelem_U1;
 }
 
-internal record LdelemU2 : Ldelem, IOpcodePattern {
+internal record LdelemU2 : Ldelem {
 	protected override string TypeName => "System.UInt16";
-	public OpCode Opcode => OpCodes.Ldelem_U2;
+	public override OpCode Opcode => OpCodes.Ldelem_U2;
 }
 
-internal record LdelemU4 : Ldelem, IOpcodePattern {
+internal record LdelemU4 : Ldelem {
 	protected override string TypeName => "System.UInt32";
-	public OpCode Opcode => OpCodes.Ldelem_U4;
+	public override OpCode Opcode => OpCodes.Ldelem_U4;
 }
 
-internal record LdelemI1 : Ldelem, IOpcodePattern {
+internal record LdelemI1 : Ldelem {
 	protected override string TypeName => "System.SByte";
-	public OpCode Opcode => OpCodes.Ldelem_I1;
+	public override OpCode Opcode => OpCodes.Ldelem_I1;
 }
 
-internal record LdelemI2 : Ldelem, IOpcodePattern {
+internal record LdelemI2 : Ldelem {
 	protected override string TypeName => "System.Int16";
-	public OpCode Opcode => OpCodes.Ldelem_I2;
+	public override OpCode Opcode => OpCodes.Ldelem_I2;
 }
 
-internal record LdelemI4 : Ldelem, IOpcodePattern {
+internal record LdelemI4 : Ldelem {
 	protected override string TypeName => "System.Int32";
-	public OpCode Opcode => OpCodes.Ldelem_I4;
+	public override OpCode Opcode => OpCodes.Ldelem_I4;
 }
 
-internal record LdelemI8 : Ldelem, IOpcodePattern {
+internal record LdelemI8 : Ldelem {
 	protected override string TypeName => "System.Int64";
-	public OpCode Opcode => OpCodes.Ldelem_I8;
+	public override OpCode Opcode => OpCodes.Ldelem_I8;
 }
 
-internal record LdelemR4 : Ldelem, IOpcodePattern {
+internal record LdelemR4 : Ldelem {
 	protected override string TypeName => "System.Single";
-	public OpCode Opcode => OpCodes.Ldelem_R4;
+	public override OpCode Opcode => OpCodes.Ldelem_R4;
 }
 
-internal record LdelemR8 : Ldelem, IOpcodePattern {
+internal record LdelemR8 : Ldelem {
 	protected override string TypeName => "System.Double";
-	public OpCode Opcode => OpCodes.Ldelem_R8;
+	public override OpCode Opcode => OpCodes.Ldelem_R8;
 }
 
 internal record Ldelema : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		/* these are for 7.0+, older versions are different
 		OpCodes.Ldarg_0,
@@ -136,6 +136,6 @@ internal record Ldelema : IOpcodePattern {
 		OpCodes.Callvirt,
 		OpCodes.Ret
 	};
-	public bool MatchAnywhere => true;
-	public OpCode Opcode => OpCodes.Ldelema;
+	public override bool MatchAnywhere => true;
+	public override OpCode Opcode => OpCodes.Ldelema;
 }

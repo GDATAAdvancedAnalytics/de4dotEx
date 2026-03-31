@@ -24,8 +24,8 @@ using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
-record BaseArithPattern : IPattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+abstract record BaseArithPattern : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -55,9 +55,9 @@ record BaseArithPattern : IPattern {
 	internal const int CallIndex = 18;
 }
 
-internal record Add : BaseArithPattern, IOpcodePattern {
+internal record Add : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -70,18 +70,18 @@ internal record Add : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Add;
+	public override OpCode Opcode => OpCodes.Add;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record AddOvf : BaseArithPattern, IOpcodePattern {
+internal record AddOvf : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -94,18 +94,18 @@ internal record AddOvf : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Add_Ovf;
+	public override OpCode Opcode => OpCodes.Add_Ovf;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record AddOvfUn : BaseArithPattern, IOpcodePattern {
+internal record AddOvfUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -118,18 +118,18 @@ internal record AddOvfUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Add_Ovf_Un;
+	public override OpCode Opcode => OpCodes.Add_Ovf_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Sub : BaseArithPattern, IOpcodePattern {
+internal record Sub : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -142,18 +142,18 @@ internal record Sub : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Sub;
+	public override OpCode Opcode => OpCodes.Sub;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
 internal record SubOvf : IOpcodePattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -166,10 +166,10 @@ internal record SubOvf : IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,     // Stack
@@ -196,15 +196,15 @@ internal record SubOvf : IOpcodePattern {
 		OpCodes.Throw
 	};
 
-	public OpCode Opcode => OpCodes.Sub_Ovf;
+	public override OpCode Opcode => OpCodes.Sub_Ovf;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[18].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record SubOvfUn : BaseArithPattern, IOpcodePattern {
+internal record SubOvfUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -217,18 +217,18 @@ internal record SubOvfUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Sub_Ovf_Un;
+	public override OpCode Opcode => OpCodes.Sub_Ovf_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Mul : BaseArithPattern, IOpcodePattern {
+internal record Mul : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -241,18 +241,18 @@ internal record Mul : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Mul;
+	public override OpCode Opcode => OpCodes.Mul;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record MulOvf : BaseArithPattern, IOpcodePattern {
+internal record MulOvf : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -265,18 +265,18 @@ internal record MulOvf : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Mul_Ovf;
+	public override OpCode Opcode => OpCodes.Mul_Ovf;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record MulOvfUn : BaseArithPattern, IOpcodePattern {
+internal record MulOvfUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -289,18 +289,18 @@ internal record MulOvfUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Mul_Ovf_Un;
+	public override OpCode Opcode => OpCodes.Mul_Ovf_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Div : BaseArithPattern, IOpcodePattern {
+internal record Div : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -313,18 +313,18 @@ internal record Div : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Div;
+	public override OpCode Opcode => OpCodes.Div;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record DivUn : BaseArithPattern, IOpcodePattern {
+internal record DivUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -337,18 +337,18 @@ internal record DivUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Div_Un;
+	public override OpCode Opcode => OpCodes.Div_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Rem : BaseArithPattern, IOpcodePattern {
+internal record Rem : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -361,18 +361,18 @@ internal record Rem : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Rem;
+	public override OpCode Opcode => OpCodes.Rem;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record RemUn : BaseArithPattern, IOpcodePattern {
+internal record RemUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -385,18 +385,18 @@ internal record RemUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Rem_Un;
+	public override OpCode Opcode => OpCodes.Rem_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record And : BaseArithPattern, IOpcodePattern {
+internal record And : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -409,18 +409,18 @@ internal record And : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.And;
+	public override OpCode Opcode => OpCodes.And;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Or : BaseArithPattern, IOpcodePattern {
+internal record Or : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -433,18 +433,18 @@ internal record Or : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Or;
+	public override OpCode Opcode => OpCodes.Or;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Xor : BaseArithPattern, IOpcodePattern {
+internal record Xor : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -457,18 +457,18 @@ internal record Xor : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Xor;
+	public override OpCode Opcode => OpCodes.Xor;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Shl : BaseArithPattern, IOpcodePattern {
+internal record Shl : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -483,18 +483,18 @@ internal record Shl : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Shl;
+	public override OpCode Opcode => OpCodes.Shl;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Shr : BaseArithPattern, IOpcodePattern {
+internal record Shr : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -509,18 +509,18 @@ internal record Shr : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Shr;
+	public override OpCode Opcode => OpCodes.Shr;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record ShrUn : BaseArithPattern, IOpcodePattern {
+internal record ShrUn : BaseArithPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -535,17 +535,17 @@ internal record ShrUn : BaseArithPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Shr_Un;
+	public override OpCode Opcode => OpCodes.Shr_Un;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-record BaseUnaryPattern : IPattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+abstract record BaseUnaryPattern : IOpcodePattern {
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -568,7 +568,7 @@ record BaseUnaryPattern : IPattern {
 }
 
 internal record Neg : IOpcodePattern {
-	public IList<OpCode> Pattern => new List<OpCode>
+	public override IList<OpCode> Pattern => new List<OpCode>
 	{
 		OpCodes.Ldarg_0,
 		OpCodes.Ldfld,
@@ -582,7 +582,7 @@ internal record Neg : IOpcodePattern {
 	};
 
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -591,18 +591,18 @@ internal record Neg : IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Neg;
+	public override OpCode Opcode => OpCodes.Neg;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[6].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }
 
-internal record Not : BaseUnaryPattern, IOpcodePattern {
+internal record Not : BaseUnaryPattern {
 	record Inner : IPattern {
-		public IList<OpCode> Pattern => new List<OpCode>
+		public override IList<OpCode> Pattern => new List<OpCode>
 		{
 			OpCodes.Ldarg_0,
 			OpCodes.Ldflda,
@@ -611,11 +611,11 @@ internal record Not : BaseUnaryPattern, IOpcodePattern {
 			OpCodes.Newobj,
 			OpCodes.Ret
 		};
-		public bool MatchAnywhere => true;
+		public override bool MatchAnywhere => true;
 	}
 
-	public OpCode Opcode => OpCodes.Not;
+	public override OpCode Opcode => OpCodes.Not;
 
-	public bool Verify(IList<Instruction> instructions)
+	public override bool Verify(IList<Instruction> instructions)
 		=> (instructions[CallIndex].Operand as MethodDef).FindPatternInOverrides(new Inner());
 }

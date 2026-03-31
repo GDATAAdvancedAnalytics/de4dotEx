@@ -25,29 +25,32 @@ using dnlib.DotNet.Emit;
 
 namespace de4dot.code.deobfuscators.dotNET_Reactor.v4.vm;
 
-public interface IPattern {
+// Note: These should be interfaces in newer .NET versions, but they aren't
+// because .NET 4.8 doesn't support default implementations.
+
+public abstract record IPattern {
 	/// <summary>
 	/// Contiguous list of opcodes that should match. Nops are wildcards.
 	/// The pattern does not need to overlap the input completely, i.e., it can be a prefix of the input.
 	/// </summary>
-	IList<OpCode> Pattern { get; }
+	public virtual IList<OpCode> Pattern { get; }
 
 	/// <summary>
 	/// If true, the pattern doesn't need to match from the start.
 	/// </summary>
-	bool MatchAnywhere => false;
+	public virtual bool MatchAnywhere => false;
 
 	/// <summary>
 	/// Does (optional) additional verification on the input if the pattern would not be unique otherwise.
 	/// </summary>
 	/// <param name="instructions">Matched instructions from the input.</param>
 	/// <returns>True if this should indeed be a match.</returns>
-	bool Verify(IList<Instruction> instructions) => true;
+	public virtual bool Verify(IList<Instruction> instructions) => true;
 }
 
-public interface IOpcodePattern : IPattern {
+public abstract record IOpcodePattern : IPattern {
 	/// <summary>
 	/// Resulting opcode assigned to the match.
 	/// </summary>
-	OpCode Opcode { get; }
+	public virtual OpCode Opcode { get; }
 }

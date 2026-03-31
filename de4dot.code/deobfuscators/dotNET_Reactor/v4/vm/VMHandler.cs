@@ -34,6 +34,6 @@ internal readonly struct VMHandler {
 
 	public override string ToString() =>
 		Instructions.Count > 0
-			? "public IList<OpCode> Pattern => new List<OpCode>\n{\n" + string.Join(",\n", Instructions.Select(x => $"OpCodes.{x.OpCode.Code}")) + "\n};"
+			? "public override IList<OpCode> Pattern => new List<OpCode>\n{\n" + string.Join(",\n", Instructions.Select(x => $"OpCodes.{x.OpCode.Code}")) + "\n};"
 			: "None";
 }

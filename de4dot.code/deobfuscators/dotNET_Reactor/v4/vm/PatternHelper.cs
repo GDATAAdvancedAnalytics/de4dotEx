@@ -58,11 +58,11 @@ internal static class PatternHelper {
 			var firstOverride = t.Methods.FirstOrDefault(m => m.IsVirtual && m.HasBody
 			                                                              && m.Name == virtualMethod.Name
 			                                                              && m.Body.Instructions.Count >= 3
-			                                                              && m.Body.Instructions[^2].OpCode == OpCodes.Callvirt);
+			                                                              && m.Body.Instructions[m.Body.Instructions.Count - 2].OpCode == OpCodes.Callvirt); // net48 compat
 			if (firstOverride == null)
 				continue;
 
-			var calledInOverride = ((MethodDef)firstOverride.Body.Instructions[^2].Operand).Name;
+			var calledInOverride = ((MethodDef)firstOverride.Body.Instructions[firstOverride.Body.Instructions.Count - 2].Operand).Name; // net48 compat
 			foreach (var t2 in virtualMethod.Module.GetTypes()) {
 				foreach (var callee in t2.Methods.Where(m => m.IsVirtual && m.HasBody && m.Name == calledInOverride)) {
 					if (PatternMatcher.Match(pattern, callee.Body.Instructions))
