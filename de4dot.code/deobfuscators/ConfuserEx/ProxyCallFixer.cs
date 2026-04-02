@@ -139,10 +139,10 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             }
 
             result *= GetMagicNumber(field.CustomAttributes[0]);
-            calledMethod = module.ResolveMemberRef(new MDToken(result).Rid);
+            calledMethod = module.ResolveToken(result) as IMethod;
 
             if (calledMethod == null)
-                throw new Exception();
+                throw new Exception($"Resolved token is wrong: {result:X8}");
 
             var charNum = GetCharNum(instructions, parameters.Last());
             callOpcode = GetCallOpCode(calledMethod, charNum, ctx.ByteNum);
@@ -150,19 +150,17 @@ namespace de4dot.code.deobfuscators.ConfuserEx
             ctx.CreateMethod.Body = originalMethod.Body; // restore
         }
 
-        private OpCode GetCallOpCode(IMethod calledMethod, int charNum, int byteNum)
-        {
-            if (calledMethod.ResolveMethodDef().IsStatic) return OpCodes.Call;
+        private OpCode GetCallOpCode(IMethod calledMethod, int charNum, int byteNum) {
+            if (calledMethod is not MemberRef && calledMethod.ResolveMethodDef().IsStatic) return OpCodes.Call;
 
             var charOpCode = (byte) (charNum ^ byteNum);
 
-            if (charOpCode == 0x28)
-                return OpCodes.Call;
-            if (charOpCode == 0x6F)
-                return OpCodes.Callvirt;
-            if (charOpCode == 0x73)
-                return OpCodes.Newobj;
-            throw new Exception();
+            return charOpCode switch {
+	            0x28 => OpCodes.Call,
+	            0x6F => OpCodes.Callvirt,
+	            0x73 => OpCodes.Newobj,
+	            _ => throw new Exception($"Invalid charOpCode {charOpCode:X2}")
+            };
         }
 
         private int EmulateNativeMethod(MethodDef externalMethod, int parameter)
@@ -256,7 +254,7 @@ namespace de4dot.code.deobfuscators.ConfuserEx
                 if ((Parameter) instrs[0].Operand != byteParam)
                     continue;
 
-                return (int) instructions[i - 5].Operand;
+                return (int) instructions[i - 5].Operand; // ldc.i4 placed by ReplaceFieldNameChar()
             }
             throw new Exception();
         }

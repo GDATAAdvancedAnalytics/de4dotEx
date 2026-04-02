@@ -3,7 +3,7 @@ namespace de4dot.Bea
 {
     public static class BeaConstants
     {
-        public static int INSTRUCT_LENGTH = 80;
+        public const int INSTRUCT_LENGTH = 80;
         
         public enum SegmentRegister : byte
         {

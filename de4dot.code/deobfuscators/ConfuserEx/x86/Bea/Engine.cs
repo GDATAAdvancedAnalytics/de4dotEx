@@ -1,45 +1,44 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace de4dot.Bea
 {
-    public static class BeaEngine
-    {
-        // 'de4dot\bin\de4dot.blocks.dll' -> 'de4dot\bin\'
-        private static string _executingPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+	public static class BeaEngine
+	{
+		// 'de4dot\bin\de4dot.blocks.dll' -> 'de4dot\bin\'
+		private static readonly string ExecutingPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
-        static BeaEngine()
-        {
-            //TODO: Better handle native DLL discovery
-            SetDllDirectory(_executingPath);
-        }
+		static BeaEngine()
+		{
+			//TODO: Better handle native DLL discovery
+			if (IsWindows())
+				SetDllDirectory(ExecutingPath);
+		}
 
-        [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool SetDllDirectory(string lpPathName);
+		private static bool IsWindows()
+		{
+#if NET5_0_OR_GREATER
+			return OperatingSystem.IsWindows();
+#else
+			return Environment.OSVersion.Platform == PlatformID.Win32NT;
+#endif
+		}
 
-        [DllImport("BeaEngine")]
-        public static extern int Disasm([In, Out, MarshalAs(UnmanagedType.LPStruct)] Disasm disasm);
+		[DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
+		private static extern bool SetDllDirectory(string lpPathName);
 
-        [DllImport("BeaEngine")]
-        private static extern string BeaEngineVersion();
+		[DllImport("BeaEngine")]
+		public static extern int Disasm([In, Out, MarshalAs(UnmanagedType.LPStruct)] Disasm disasm);
 
-        [DllImport("BeaEngine")]
-        private static extern string BeaEngineRevision();
+		[DllImport("BeaEngine")]
+		private static extern IntPtr BeaEngineVersion(); // returning string would call free() on a const char*
 
-        public static string Version
-        {
-            get
-            {
-                return BeaEngineVersion();
-            }
-        }
+		[DllImport("BeaEngine")]
+		private static extern IntPtr BeaEngineRevision();
 
-        public static string Revision
-        {
-            get
-            {
-                return BeaEngineRevision();
-            }
-        }
-    }
+		public static string Version => Marshal.PtrToStringAnsi(BeaEngineVersion());
+
+		public static string Revision => Marshal.PtrToStringAnsi(BeaEngineRevision());
+	}
 }

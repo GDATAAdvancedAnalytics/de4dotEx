@@ -13,7 +13,7 @@ namespace de4dot.Bea
         public byte state;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public class PrefixInfo
     {
         public int Number;
@@ -32,7 +32,7 @@ namespace de4dot.Bea
         public byte BranchTaken;
         public byte BranchNotTaken;
         public REX_Struct REX;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 16)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 2)]
         public string alignment;
     }
 
@@ -53,7 +53,7 @@ namespace de4dot.Bea
         public byte alignment;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public class RegisterType
     {
         public Int64 type;
@@ -74,16 +74,16 @@ namespace de4dot.Bea
     }
 
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public class MemoryType
     {
-        public Int32 BaseRegister;
-        public Int32 IndexRegister;
+        public Int64 BaseRegister;
+        public Int64 IndexRegister;
         public Int32 Scale;
         public Int64 Displacement;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public class InstructionType
     {
         public Int32 Category;
@@ -98,12 +98,12 @@ namespace de4dot.Bea
         public RegisterType ImplicitUsedRegs;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public class ArgumentType
     {
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 24)]
         public string OpMnemonic;
-        public Int32 OpType;
+        public Int64 OpType;
         public Int32 OpSize;
         public Int32 OpPosition;
         public UInt32 AccessMode;
@@ -112,13 +112,13 @@ namespace de4dot.Bea
         public UInt32 SegmentReg;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public class Disasm
     {
         public IntPtr EIP;
         public UInt64 VirtualAddr;
         public UInt32 SecurityBlock;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BeaConstants.INSTRUCT_LENGTH)]
         public string CompleteInstr;
         public UInt32 Archi;
         public UInt64 Options;
