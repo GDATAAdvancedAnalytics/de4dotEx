@@ -31,13 +31,11 @@ jobs:
           Remove-Item publish-net8.0\*.pdb, publish-net8.0\*.xml
 
       - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: de4dotEx-net48
           path: Release/net48
 
       - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: de4dotEx-net8.0-win-x64
           path: publish-net8.0
@@ -60,7 +58,6 @@ jobs:
           rm -rf publish-net8.0/*.pdb publish-net8.0/*.xml
 
       - name: Upload publish folder
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: de4dotEx-net8.0-linux-x64
