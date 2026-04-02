@@ -43,14 +43,18 @@ jobs:
 
           git clone --depth 1 --branch $env:BEAENGINE_TAG https://github.com/BeaEngine/beaengine.git beaengine
 
+          # Remove cmake malpractice
+          (Get-Content beaengine/CMakeLists.txt) |
+            Where-Object { $_ -notmatch '\s*list\s*\(APPEND\s+BEA_FLAGS\s+/M' } |
+            Set-Content beaengine/CMakeLists.txt
+
           # Win32 for .NET 4.8
           cmake -S beaengine -B build-beaengine-32 `
             -A Win32 `
             -DoptBUILD_DLL=ON `
             -DoptHAS_OPTIMIZED=ON `
             -DoptHAS_SYMBOLS=OFF `
-            -DCMAKE_C_FLAGS_RELEASE="/MT" `
-            -DCMAKE_CXX_FLAGS_RELEASE="/MT"
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 
           cmake --build build-beaengine-32 --config Release
 
@@ -70,8 +74,7 @@ jobs:
             -DoptBUILD_DLL=ON `
             -DoptHAS_OPTIMIZED=ON `
             -DoptHAS_SYMBOLS=OFF `
-            -DCMAKE_C_FLAGS_RELEASE="/MT" `
-            -DCMAKE_CXX_FLAGS_RELEASE="/MT"
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 
           cmake --build build-beaengine-64 --config Release
 
