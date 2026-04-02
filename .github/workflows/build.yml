@@ -47,7 +47,10 @@ jobs:
           cmake -S beaengine -B build-beaengine-32 `
             -A Win32 `
             -DoptBUILD_DLL=ON `
-            -DCMAKE_BUILD_TYPE=Release
+            -DoptHAS_OPTIMIZED=ON `
+            -DoptHAS_SYMBOLS=OFF `
+            -DCMAKE_C_FLAGS_RELEASE="/MT" `
+            -DCMAKE_CXX_FLAGS_RELEASE="/MT"
 
           cmake --build build-beaengine-32 --config Release
 
@@ -65,7 +68,10 @@ jobs:
           cmake -S beaengine -B build-beaengine-64 `
             -A x64 `
             -DoptBUILD_DLL=ON `
-            -DCMAKE_BUILD_TYPE=Release
+            -DoptHAS_OPTIMIZED=ON `
+            -DoptHAS_SYMBOLS=OFF `
+            -DCMAKE_C_FLAGS_RELEASE="/MT" `
+            -DCMAKE_CXX_FLAGS_RELEASE="/MT"
 
           cmake --build build-beaengine-64 --config Release
 
@@ -114,7 +120,8 @@ jobs:
 
           cmake -S beaengine -B build64 \
             -DoptBUILD_DLL=ON \
-            -DCMAKE_BUILD_TYPE=Release
+            -DoptHAS_OPTIMIZED=ON \
+            -DoptHAS_SYMBOLS=OFF
 
           cmake --build build64
 
