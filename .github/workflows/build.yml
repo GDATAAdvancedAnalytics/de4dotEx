@@ -103,8 +103,8 @@ jobs:
 
       - name: Publish ${{ env.DOTNET_RUNTIME }}
         run: |
-          dotnet publish -c Release -f "$DOTNET_RUNTIME" -o "publish-$DOTNET_RUNTIME" de4dot
-          rm -rf "publish-$DOTNET_RUNTIME/*.pdb" "publish-$DOTNET_RUNTIME/*.xml"
+          dotnet publish -c Release -f "${DOTNET_RUNTIME}" -o publish-${DOTNET_RUNTIME} de4dot
+          rm -rf publish-${DOTNET_RUNTIME}/*.pdb publish-${DOTNET_RUNTIME}/*.xml
 
       - name: Build BeaEngine
         run: |
@@ -121,9 +121,9 @@ jobs:
           so64=$(find build64 -name "libBeaEngine*.so" | head -n 1)
           [[ -n "$so64" ]] || { echo "libBeaEngine not found"; exit 1; }
 
-          cp "$so64" "publish-$DOTNET_RUNTIME/libBeaEngine.so"
-          cp beaengine/src/COPYING.txt "publish-$DOTNET_RUNTIME/LICENSES/LICENSE.BeaEngine.GPL.txt"
-          cp beaengine/src/COPYING.LESSER.txt "publish-$DOTNET_RUNTIME/LICENSES/LICENSE.BeaEngine.LGPL.txt"
+          cp "$so64" publish-${DOTNET_RUNTIME}/libBeaEngine.so
+          cp beaengine/src/COPYING.txt publish-${DOTNET_RUNTIME}/LICENSES/LICENSE.BeaEngine.GPL.txt
+          cp beaengine/src/COPYING.LESSER.txt publish-${DOTNET_RUNTIME}/LICENSES/LICENSE.BeaEngine.LGPL.txt
 
       - name: Upload publish folder
         uses: actions/upload-artifact@v4
