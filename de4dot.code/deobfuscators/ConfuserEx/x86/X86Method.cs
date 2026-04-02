@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using ConfuserDeobfuscator.Engine.Routines.Ex.x86;
-using ConfuserDeobfuscator.Engine.Routines.Ex.x86.Instructions;
 using de4dot.Bea;
+using de4dot.code.deobfuscators.ConfuserEx.x86.Instructions;
 using dnlib.DotNet;
 
 namespace de4dot.code.deobfuscators.ConfuserEx.x86
@@ -34,6 +33,8 @@ namespace de4dot.code.deobfuscators.ConfuserEx.x86
             ParseInstructions(method);
         }
 
+        private const int X86MaxInsSize = 15;
+
         private void ParseInstructions(MethodDef method)
         {
             var rawInstructions = new List<Disasm>();
@@ -41,14 +42,16 @@ namespace de4dot.code.deobfuscators.ConfuserEx.x86
             while (true)
             { 
                 byte[] bytes = ReadChunk(method, _module);
-
-                var disasm = new Disasm();
                 var buff = new UnmanagedBuffer(bytes);
 
-                disasm.EIP = new IntPtr(buff.Ptr.ToInt32());
+                var disasm = new Disasm { Archi = 32, EIP = new IntPtr(buff.Ptr.ToInt64()) };
 
-                var instruction = BeaEngine.Disasm(disasm);
-                //_readOffset -= 8 - instruction; // revert offset back for each byte that was not a part of this instruction
+                var disasmResult = BeaEngine.Disasm(disasm);
+                if (disasmResult < 0) {
+	                break;
+                }
+
+                _readOffset -= (uint)(X86MaxInsSize - disasmResult); // revert offset back for each byte that was not a part of this instruction
                 var mnemonic = disasm.Instruction.Mnemonic.Trim();
 
                 if (mnemonic == "ret") //TODO: Check if this is the only return in function, e.g. check for jumps that go beyond this address
@@ -57,18 +60,13 @@ namespace de4dot.code.deobfuscators.ConfuserEx.x86
                     break;
                 }
 
-                rawInstructions.Add(Clone(disasm));
-                //disasm.EIP = new IntPtr(disasm.EIP.ToInt32() + instruction);
+                rawInstructions.Add(disasm);
 
                 Marshal.FreeHGlobal(buff.Ptr);
             }
 
-            //while(rawInstructions.First().Instruction.Mnemonic.Trim() == "pop")
-            //    rawInstructions.Remove(rawInstructions.First());
-
             while (rawInstructions.Last().Instruction.Mnemonic.Trim() == "pop")
-                rawInstructions.Remove(rawInstructions.Last());
-
+                rawInstructions.RemoveAt(rawInstructions.Count - 1);
 
             foreach (var instr in rawInstructions)
             {
@@ -101,25 +99,29 @@ namespace de4dot.code.deobfuscators.ConfuserEx.x86
                     case "pop":
                         Instructions.Add(new X86POP(instr));
                         break;
+                    default:
+	                    Logger.w("ConfuserEx native: Unhandled instruction {0}", instr.CompleteInstr.Trim());
+	                    break;
                 }
             }
         }
 
         private uint _readOffset;
-        public byte[] ReadChunk(MethodDef method, ModuleDefMD module)
+
+        private byte[] ReadChunk(MethodDef method, ModuleDefMD module)
         {
             var stream = module.Metadata.PEImage.CreateReader();
-            var offset = module.Metadata﻿.PEImage.ToFileOffset(method.RVA);
+            var offset = module.Metadata.PEImage.ToFileOffset(method.RVA);
 
-            byte[] buffer = new byte[8];
+            byte[] buffer = new byte[X86MaxInsSize];
 
             if (_readOffset == 0u) //TODO: Don't use hardcoded offset
                 _readOffset = (uint) offset + 20u; // skip to actual calculation code
 
             stream.Position = _readOffset;
 
-            stream.ReadBytes(buffer, 0, 8); // read 8 bytes to make sure that's a whole instruction
-            _readOffset += 8;
+            stream.ReadBytes(buffer, 0, X86MaxInsSize);
+            _readOffset += X86MaxInsSize;
 
             return buffer;
         }
@@ -133,24 +135,6 @@ namespace de4dot.code.deobfuscators.ConfuserEx.x86
                 instr.Execute(Registers, LocalStack);
 
             return Registers["EAX"];
-        }
-
-        public static Disasm Clone(Disasm disasm)
-        {
-            return new Disasm
-            {
-                Archi = disasm.Archi,
-                Operand1 = disasm.Operand1,
-                Operand2 = disasm.Operand2,
-                Operand3 = disasm.Operand3,
-                CompleteInstr = disasm.CompleteInstr,
-                EIP = disasm.EIP,
-                Instruction = disasm.Instruction,
-                Options = disasm.Options,
-                Prefix = disasm.Prefix,
-                SecurityBlock = disasm.SecurityBlock,
-                VirtualAddr = disasm.VirtualAddr
-            };
         }
     }
 }

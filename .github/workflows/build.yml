@@ -8,6 +8,12 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+env:
+  DOTNET_RUNTIME: net8.0
+  SETUP_DOTNET_VERSION: 8.0.x
+
+  BEAENGINE_TAG: v5.3.0
+
 jobs:
   build-windows:
     name: Build Windows artifacts
@@ -27,20 +33,70 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           Remove-Item Release\net48\*.pdb, Release\net48\*.xml, Release\net48\Test.Rename.*
 
-          dotnet publish -c Release -f net8.0 -o publish-net8.0 de4dot
-          Remove-Item publish-net8.0\*.pdb, publish-net8.0\*.xml
+          dotnet publish -c Release -f $env:DOTNET_RUNTIME -o publish-$env:DOTNET_RUNTIME de4dot
+          Remove-Item publish-$env:DOTNET_RUNTIME\*.pdb, publish-$env:DOTNET_RUNTIME\*.xml
+
+      - name: Build BeaEngine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          git clone --depth 1 --branch $env:BEAENGINE_TAG https://github.com/BeaEngine/beaengine.git beaengine
+
+          # Remove cmake malpractice
+          (Get-Content beaengine/CMakeLists.txt) |
+            Where-Object { $_ -notmatch '\s*list\s*\(APPEND\s+BEA_FLAGS\s+/M' } |
+            Set-Content beaengine/CMakeLists.txt
+
+          # Win32 for .NET 4.8
+          cmake -S beaengine -B build-beaengine-32 `
+            -A Win32 `
+            -DoptBUILD_DLL=ON `
+            -DoptHAS_OPTIMIZED=ON `
+            -DoptHAS_SYMBOLS=OFF `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+          cmake --build build-beaengine-32 --config Release
+
+          $dll32 = Get-ChildItem -Recurse build-beaengine-32 -Filter BeaEngine*.dll | Select-Object -First 1
+
+          if (-not $dll32) {
+            throw "32-bit BeaEngine.dll not found"
+          }
+
+          Copy-Item $dll32.FullName Release/net48/BeaEngine.dll
+          Copy-Item beaengine/src/COPYING.txt Release/net48/LICENSES/LICENSE.BeaEngine.GPL.txt
+          Copy-Item beaengine/src/COPYING.LESSER.txt Release/net48/LICENSES/LICENSE.BeaEngine.LGPL.txt
+
+          # Win64 for .NET 8+
+          cmake -S beaengine -B build-beaengine-64 `
+            -A x64 `
+            -DoptBUILD_DLL=ON `
+            -DoptHAS_OPTIMIZED=ON `
+            -DoptHAS_SYMBOLS=OFF `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+          cmake --build build-beaengine-64 --config Release
+
+          $dll64 = Get-ChildItem -Recurse build-beaengine-64 -Filter BeaEngine*.dll | Select-Object -First 1
+
+          if (-not $dll64) {
+            throw "64-bit BeaEngine.dll not found"
+          }
+
+          Copy-Item $dll64.FullName publish-$env:DOTNET_RUNTIME/BeaEngine.dll
+          Copy-Item beaengine/src/COPYING.txt publish-$env:DOTNET_RUNTIME/LICENSES/LICENSE.BeaEngine.GPL.txt
+          Copy-Item beaengine/src/COPYING.LESSER.txt publish-$env:DOTNET_RUNTIME/LICENSES/LICENSE.BeaEngine.LGPL.txt
 
       - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: de4dotEx-net48
           path: Release/net48
 
       - uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
-          name: de4dotEx-net8.0-win-x64
-          path: publish-net8.0
+          name: de4dotEx-${{ env.DOTNET_RUNTIME }}-win-x64
+          path: publish-${{ env.DOTNET_RUNTIME }}
 
   build-linux:
     name: Build Linux artifacts & package .deb
@@ -52,19 +108,38 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: ${{ env.SETUP_DOTNET_VERSION }}
 
-      - name: Publish net8.0
+      - name: Publish ${{ env.DOTNET_RUNTIME }}
         run: |
-          dotnet publish -c Release -f net8.0 -o publish-net8.0 de4dot
-          rm -rf publish-net8.0/*.pdb publish-net8.0/*.xml
+          dotnet publish -c Release -f "${DOTNET_RUNTIME}" -o publish-${DOTNET_RUNTIME} de4dot
+          rm -rf publish-${DOTNET_RUNTIME}/*.pdb publish-${DOTNET_RUNTIME}/*.xml
+
+      - name: Build BeaEngine
+        run: |
+          set -euo pipefail
+
+          git clone --depth 1 --branch "$BEAENGINE_TAG" https://github.com/BeaEngine/beaengine.git
+
+          cmake -S beaengine -B build64 \
+            -DoptBUILD_DLL=ON \
+            -DoptHAS_OPTIMIZED=ON \
+            -DoptHAS_SYMBOLS=OFF
+
+          cmake --build build64
+
+          so64=$(find build64 -name "libBeaEngine*.so" | head -n 1)
+          [[ -n "$so64" ]] || { echo "libBeaEngine not found"; exit 1; }
+
+          cp "$so64" publish-${DOTNET_RUNTIME}/libBeaEngine.so
+          cp beaengine/src/COPYING.txt publish-${DOTNET_RUNTIME}/LICENSES/LICENSE.BeaEngine.GPL.txt
+          cp beaengine/src/COPYING.LESSER.txt publish-${DOTNET_RUNTIME}/LICENSES/LICENSE.BeaEngine.LGPL.txt
 
       - name: Upload publish folder
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
-          name: de4dotEx-net8.0-linux-x64
-          path: publish-net8.0
+          name: de4dotEx-${{ env.DOTNET_RUNTIME }}-linux-x64
+          path: publish-${{ env.DOTNET_RUNTIME }}
 
       - name: Extract version from Git tag
         if: startsWith(github.ref, 'refs/tags/')
@@ -77,7 +152,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           mkdir -p deb-root/opt/de4dotEx
-          cp -r publish-net8.0/* deb-root/opt/de4dotEx/
+          cp -r "publish-$DOTNET_RUNTIME/*" deb-root/opt/de4dotEx/
 
           mkdir -p deb-root/usr/local/bin
           ln -s /opt/de4dotEx/de4dot deb-root/usr/local/bin/de4dot
@@ -90,7 +165,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Maintainer: G DATA Advanced Analytics GmbH <mwa@gdata-adan.de>
-          Depends: libicu77 | libicu76 | libicu74 | libicu72 | libicu70 | libicu67 | libicu66
+          Depends: libicu78 | libicu77 | libicu76 | libicu74 | libicu72 | libicu70 | libicu67 | libicu66
           Description: .NET deobfuscator and unpacker
            de4dot is a .NET deobfuscator and unpacker. It will try its best to
            restore a packed and obfuscated assembly to almost the original
@@ -106,5 +181,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: de4dotEx-${{ steps.get_version.outputs.VERSION }}-net8.0-x64-deb
+          name: de4dotEx-${{ steps.get_version.outputs.VERSION }}-${{ env.DOTNET_RUNTIME }}-x64-deb
           path: de4dotEx-${{ steps.get_version.outputs.VERSION }}.deb

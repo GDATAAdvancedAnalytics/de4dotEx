@@ -1,45 +1,21 @@
-﻿using System.IO;
+using System;
 using System.Runtime.InteropServices;
 
 namespace de4dot.Bea
 {
-    public static class BeaEngine
-    {
-        // 'de4dot\bin\de4dot.blocks.dll' -> 'de4dot\bin\'
-        private static string _executingPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+	public static class BeaEngine
+	{
+		[DllImport("BeaEngine")]
+		public static extern int Disasm([In, Out, MarshalAs(UnmanagedType.LPStruct)] Disasm disasm);
 
-        static BeaEngine()
-        {
-            //TODO: Better handle native DLL discovery
-            SetDllDirectory(_executingPath);
-        }
+		[DllImport("BeaEngine")]
+		private static extern IntPtr BeaEngineVersion(); // returning string would call free() on a const char*
 
-        [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool SetDllDirectory(string lpPathName);
+		[DllImport("BeaEngine")]
+		private static extern IntPtr BeaEngineRevision();
 
-        [DllImport("BeaEngine")]
-        public static extern int Disasm([In, Out, MarshalAs(UnmanagedType.LPStruct)] Disasm disasm);
+		public static string Version => Marshal.PtrToStringAnsi(BeaEngineVersion());
 
-        [DllImport("BeaEngine")]
-        private static extern string BeaEngineVersion();
-
-        [DllImport("BeaEngine")]
-        private static extern string BeaEngineRevision();
-
-        public static string Version
-        {
-            get
-            {
-                return BeaEngineVersion();
-            }
-        }
-
-        public static string Revision
-        {
-            get
-            {
-                return BeaEngineRevision();
-            }
-        }
-    }
+		public static string Revision => Marshal.PtrToStringAnsi(BeaEngineRevision());
+	}
 }

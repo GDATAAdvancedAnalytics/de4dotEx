@@ -1,16 +1,15 @@
 ﻿using System.Collections.Generic;
 using de4dot.Bea;
-using de4dot.code.deobfuscators.ConfuserEx.x86;
 
-namespace ConfuserDeobfuscator.Engine.Routines.Ex.x86.Instructions
+namespace de4dot.code.deobfuscators.ConfuserEx.x86.Instructions
 {
     class X86ADD : X86Instruction
     {
-        public X86ADD(Disasm rawInstruction) : base()
+        public X86ADD(Disasm rawInstruction)
         {
             Operands = new IX86Operand[2];
             Operands[0] = GetOperand(rawInstruction.Operand1);
-            Operands[1] = GetOperand(rawInstruction.Operand﻿2);
+            Operands[1] = GetOperand(rawInstruction.Operand2);
         }
 
         public override X86OpCode OpCode { get { return X86OpCode.ADD; } }
