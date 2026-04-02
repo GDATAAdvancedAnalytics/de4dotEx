@@ -152,7 +152,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           mkdir -p deb-root/opt/de4dotEx
-          cp -r "publish-$DOTNET_RUNTIME/*" deb-root/opt/de4dotEx/
+          cp -r publish-${DOTNET_RUNTIME}/* deb-root/opt/de4dotEx/
 
           mkdir -p deb-root/usr/local/bin
           ln -s /opt/de4dotEx/de4dot deb-root/usr/local/bin/de4dot
