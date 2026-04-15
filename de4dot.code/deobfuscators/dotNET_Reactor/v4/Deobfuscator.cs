@@ -462,7 +462,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		}
 
 		void RemoveMethods() {
-			if (methodsDecrypter.Method != null) {
+			if (methodsDecrypter.Method != null && options.DecryptMethods) {
 				AddEntryPointCallToBeRemoved(methodsDecrypter.Method);
 			}
 
@@ -501,7 +501,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 					if (antiDebug != null)
 						AddCallToBeRemoved(method, antiDebug);
 
-					if (methodsDecrypter.Method != null)
+					if (methodsDecrypter.Method != null && options.DecryptMethods)
 						AddCallToBeRemoved(method, methodsDecrypter.Method);
 
 					// AntiILDASM
