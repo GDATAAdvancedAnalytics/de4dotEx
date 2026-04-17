@@ -446,7 +446,8 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			newOne.peImage = new MyPEImage(fileData);
 			newOne.methodsDecrypter = new MethodsDecrypter(module, methodsDecrypter);
 			newOne.proxyCallFixer = new ProxyCallFixer(module, proxyCallFixer);
-			newOne.devirtualizer = new Devirtualizer(module, devirtualizer);
+			newOne.devirtualizer = new Devirtualizer(DeobfuscatedFile, module);
+			newOne.devirtualizer.Find();
 			newOne.stringDecrypter = new StringDecrypter(module, stringDecrypter);
 			newOne.booleanDecrypter = new BooleanDecrypter(module, booleanDecrypter);
 			newOne.assemblyResolver = new AssemblyResolver(module, assemblyResolver);

@@ -47,15 +47,6 @@ public class Devirtualizer {
 		_module = module;
 	}
 
-	public Devirtualizer(ModuleDefMD module, Devirtualizer oldOne) {
-		_module = module;
-		_deobfuscator = oldOne._deobfuscator;
-		_vmType = DeobUtils.Lookup(module, oldOne._vmType, "Could not find VM type");
-		if (oldOne._resource != null)
-			_resource = DotNetUtils.GetResource(module, oldOne._resource.Name.String) as EmbeddedResource;
-		StreamHasPrependedByte = oldOne.StreamHasPrependedByte;
-	}
-
 	public void Find() {
 		_vmType = _module.Types.FirstOrDefault(type =>
 			type.Methods.Any(method =>
