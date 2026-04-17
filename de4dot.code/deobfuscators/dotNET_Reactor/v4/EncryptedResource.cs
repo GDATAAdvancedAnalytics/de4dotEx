@@ -237,13 +237,69 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			}
 		}
 
-		class DecrypterV2 : IDecrypter {
+		private abstract class EmulatingDecrypterBase
+		{
+			protected MethodDef method;
+			protected List<Instruction> instructions;
+			protected List<Local> locals;
+			protected readonly InstructionEmulator instrEmulator = new();
+			protected Local emuLocal;
+
+			/**
+			 * Locates the instructions that are responsible for producing the key stream for decrypting the resource.
+			 */
+			protected bool FindStartEnd(IList<Instruction> instrs, out int startIndex, out int endIndex, out Local tmpLocal) {
+				for (int i = 0; i + 8 < instrs.Count; i++) {
+					if (instrs[i].OpCode.Code != Code.Conv_R_Un)
+						continue;
+					if (instrs[i + 1].OpCode.Code != Code.Conv_R8)
+						continue;
+					if (instrs[i + 2].OpCode.Code != Code.Conv_U4)
+						continue;
+					if (instrs[i + 3].OpCode.Code != Code.Add)
+						continue;
+					int newEndIndex = i + 3;
+					int newStartIndex = -1;
+					for (int j = newEndIndex; j >= 0; j--) {
+						// Search upwards for array access or br.
+						if (instrs[j].OpCode.Code != Code.Ldelem_U1 && (!instrs[j].IsBr() || instrs[j - 1].OpCode.Code == Code.Bne_Un_S))
+							continue;
+
+						// Go down to next local load, where the actual decryption should begin.
+						for (int k = j + 1; k < newEndIndex; k++) {
+							if (instrs[k].IsLdloc()) {
+								newStartIndex = k;
+								break;
+							}
+						}
+						break;
+					}
+					endIndex = newEndIndex;
+					startIndex = newStartIndex;
+					tmpLocal = CheckLocal(instrs[startIndex], true);
+					return true;
+				}
+				endIndex = 0;
+				startIndex = 0;
+				tmpLocal = null;
+				return false;
+			}
+
+			/**
+			 * Gets the Local referenced by the instruction if it's either ldloc or stloc (determined by isLdloc).
+			 */
+			protected Local CheckLocal(Instruction instr, bool isLdloc) {
+				if (isLdloc && !instr.IsLdloc())
+					return null;
+				if (!isLdloc && !instr.IsStloc())
+					return null;
+
+				return instr.GetLocal(locals);
+			}
+		}
+
+		class DecrypterV2 : EmulatingDecrypterBase, IDecrypter {
 			readonly byte[] key, iv;
-			MethodDef method;
-			List<Instruction> instructions;
-			List<Local> locals;
-			readonly InstructionEmulator instrEmulator = new InstructionEmulator();
-			Local emuLocal;
 			Parameter emuArg;
 			MethodDef emuMethod;
 			bool isNewDecrypter;
@@ -308,49 +364,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				endIndex = emuEndIndex;
 				tmpLocal = emuLocal;
 				return true;
-			}
-
-			bool FindStartEnd(IList<Instruction> instrs, out int startIndex, out int endIndex, out Local tmpLocal) {
-				for (int i = 0; i + 8 < instrs.Count; i++) {
-					if (instrs[i].OpCode.Code != Code.Conv_R_Un)
-						continue;
-					if (instrs[i + 1].OpCode.Code != Code.Conv_R8)
-						continue;
-					if (instrs[i + 2].OpCode.Code != Code.Conv_U4)
-						continue;
-					if (instrs[i + 3].OpCode.Code != Code.Add)
-						continue;
-					int newEndIndex = i + 3;
-					int newStartIndex = -1;
-					for (int x = newEndIndex; x > 0; x--)
-						if (instrs[x].OpCode.FlowControl != FlowControl.Next) {
-							newStartIndex = x + 1;
-							break;
-						}
-					if (newStartIndex < 0)
-						continue;
-
-					var checkLocs = new List<Local>();
-					int ckStartIndex = -1;
-					for (int y = newEndIndex; y >= newStartIndex; y--) {
-						var loc = CheckLocal(instrs[y], true);
-						if (loc == null)
-							continue;
-						if (!checkLocs.Contains(loc))
-							checkLocs.Add(loc);
-						if (checkLocs.Count == 3)
-							break;
-						ckStartIndex = y;
-					}
-					endIndex = newEndIndex;
-					startIndex = Math.Max(ckStartIndex, newStartIndex);
-					tmpLocal = CheckLocal(instrs[startIndex], true);
-					return true;
-				}
-				endIndex = 0;
-				startIndex = 0;
-				tmpLocal = null;
-				return false;
 			}
 
 			bool FindStartEnd2(ref IList<Instruction> instrs, out int startIndex, out int endIndex, out Local tmpLocal, out Parameter tmpArg, ref MethodDef methodDef, ref List<Local> locals) {
@@ -436,15 +449,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				return false;
 			}
 
-			Local CheckLocal(Instruction instr, bool isLdloc) {
-				if (isLdloc && !instr.IsLdloc())
-					return null;
-				else if (!isLdloc && !instr.IsStloc())
-					return null;
-
-				return instr.GetLocal(locals);
-			}
-
 			public byte[] Decrypt(EmbeddedResource resource) {
 				var encrypted = resource.CreateReader().ToArray();
 				var decrypted = new byte[encrypted.Length];
@@ -517,13 +521,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			}
 		}
 
-		class DecrypterV3 : IDecrypter {
-			readonly MethodDef method;
-			List<Instruction> instructions;
-			readonly List<Local> locals;
-			readonly InstructionEmulator instrEmulator = new InstructionEmulator();
-			Local emuLocal;
-
+		class DecrypterV3 : EmulatingDecrypterBase, IDecrypter {
 			public DnrDecrypterType DecrypterType => DnrDecrypterType.V3;
 
 			public DecrypterV3(MethodDef method) {
@@ -576,48 +574,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				endIndex = emuEndIndex;
 				tmpLocal = emuLocal;
 				return true;
-			}
-
-			/**
-			 * Locates the instructions that are responsible for producing the key stream for decrypting the resource.
-			 */
-			bool FindStartEnd(IList<Instruction> instrs, out int startIndex, out int endIndex, out Local tmpLocal) {
-				for (int i = 0; i + 8 < instrs.Count; i++) {
-					if (instrs[i].OpCode.Code != Code.Conv_R_Un)
-						continue;
-					if (instrs[i + 1].OpCode.Code != Code.Conv_R8)
-						continue;
-					if (instrs[i + 2].OpCode.Code != Code.Conv_U4)
-						continue;
-					if (instrs[i + 3].OpCode.Code != Code.Add)
-						continue;
-					int newEndIndex = i + 3;
-
-					int newStartIndex = -1;
-					for (int j = newEndIndex; j >= 0; j--) {
-						// Search upwards for array access.
-						if (instrs[j].OpCode.Code != Code.Ldelem_U1)
-							continue;
-
-						// Go down to next local load, where actual decryption should begin.
-						for (int k = j + 1; k < newEndIndex; k++) {
-							if (instrs[k].IsLdloc()) {
-								newStartIndex = k;
-								break;
-							}
-						}
-						break;
-					}
-
-					endIndex = newEndIndex;
-					startIndex = newStartIndex;
-					tmpLocal = CheckLocal(instrs[startIndex], true);
-					return true;
-				}
-				endIndex = 0;
-				startIndex = 0;
-				tmpLocal = null;
-				return false;
 			}
 
 			bool FindStart(IList<Instruction> instrs, out int startIndex, out Local tmpLocal) {
@@ -673,18 +629,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 
 				endIndex = 0;
 				return false;
-			}
-
-			/**
-			 * Gets the Local referenced by the instruction if it's either ldloc or stloc (determined by isLdloc).
-			 */
-			Local CheckLocal(Instruction instr, bool isLdloc) {
-				if (isLdloc && !instr.IsLdloc())
-					return null;
-				if (!isLdloc && !instr.IsStloc())
-					return null;
-
-				return instr.GetLocal(locals);
 			}
 
 			public byte[] Decrypt(EmbeddedResource resource) {
@@ -766,14 +710,10 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			}
 		}
 
-		class DecrypterV4 : IDecrypter {
+		class DecrypterV4 : EmulatingDecrypterBase, IDecrypter {
 			readonly byte[] key, iv;
 			MethodDef decryptMethod;
 			MethodDef emuMethod;
-			List<Instruction> instructions;
-			List<Local> locals;
-			readonly InstructionEmulator instrEmulator = new InstructionEmulator();
-			Local emuLocal;
 
 			public DnrDecrypterType DecrypterType => DnrDecrypterType.V4;
 
@@ -908,43 +848,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 				return true;
 			}
 
-			bool FindStartEnd(IList<Instruction> instrs, out int startIndex, out int endIndex, out Local tmpLocal) {
-				for (int i = 0; i + 8 < instrs.Count; i++) {
-					if (instrs[i].OpCode.Code != Code.Conv_R_Un)
-						continue;
-					if (instrs[i + 1].OpCode.Code != Code.Conv_R8)
-						continue;
-					if (instrs[i + 2].OpCode.Code != Code.Conv_U4)
-						continue;
-					if (instrs[i + 3].OpCode.Code != Code.Add)
-						continue;
-					int newEndIndex = i + 3;
-					int newStartIndex = -1;
-					for (int j = newEndIndex; j >= 0; j--) {
-						// Search upwards for array access.
-						if (instrs[j].OpCode.Code != Code.Ldelem_U1)
-							continue;
-
-						// Go down to next local load, where actual decryption should begin.
-						for (int k = j + 1; k < newEndIndex; k++) {
-							if (instrs[k].IsLdloc()) {
-								newStartIndex = k;
-								break;
-							}
-						}
-						break;
-					}
-					endIndex = newEndIndex;
-					startIndex = newStartIndex;
-					tmpLocal = CheckLocal(instrs[startIndex], true);
-					return true;
-				}
-				endIndex = 0;
-				startIndex = 0;
-				tmpLocal = null;
-				return false;
-			}
-
 			bool FindStart(IList<Instruction> instrs, out int startIndex, out Local tmpLocal) {
 				for (int i = 0; i + 8 < instrs.Count; i++) {
 					if (instrs[i].OpCode.Code != Code.Conv_U)
@@ -998,15 +901,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 
 				endIndex = 0;
 				return false;
-			}
-
-			Local CheckLocal(Instruction instr, bool isLdloc) {
-				if (isLdloc && !instr.IsLdloc())
-					return null;
-				else if (!isLdloc && !instr.IsStloc())
-					return null;
-
-				return instr.GetLocal(locals);
 			}
 
 			public byte[] Decrypt(EmbeddedResource resource) {
