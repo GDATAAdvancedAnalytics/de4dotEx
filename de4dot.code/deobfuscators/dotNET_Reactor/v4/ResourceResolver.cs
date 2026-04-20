@@ -45,9 +45,6 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		}
 
 		public void Find(ISimpleDeobfuscator simpleDeobfuscator) {
-			var additionalTypes = new string[] {
-				"System.String",
-			};
 			foreach (var type in module.Types) {
 				if (type.BaseType == null || type.BaseType.FullName != "System.Object")
 					continue;
@@ -59,10 +56,8 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 					if (!DotNetUtils.IsMethod(method, "System.Reflection.Assembly", "(System.Object,System.ResolveEventArgs)") &&
 						!DotNetUtils.IsMethod(method, "System.Reflection.Assembly", "(System.Object,System.Object)"))
 						continue;
-					if (method.Body.ExceptionHandlers.Count != 0)
-						continue;
-					var initMethod = GetResourceDecrypterInitMethod(method, additionalTypes, true) ??
-					                 GetResourceDecrypterInitMethod(method, additionalTypes, false);
+					var initMethod = GetResourceDecrypterInitMethod(method, true) ??
+					                 GetResourceDecrypterInitMethod(method, false);
 					if (initMethod == null)
 						continue;
 
@@ -72,14 +67,14 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			}
 		}
 
-		MethodDef GetResourceDecrypterInitMethod(MethodDef method, string[] additionalTypes, bool checkResource) {
-			if (encryptedResource.CouldBeResourceDecrypter(method, additionalTypes, checkResource))
+		MethodDef GetResourceDecrypterInitMethod(MethodDef method, bool checkResource) {
+			if (encryptedResource.CouldBeResourceDecrypter(method, null, checkResource))
 				return method;
 
 			foreach (var calledMethod in DotNetUtils.GetCalledMethods(module, method)) {
 				if (!DotNetUtils.IsMethod(calledMethod, "System.Void", "()"))
 					continue;
-				if (encryptedResource.CouldBeResourceDecrypter(calledMethod, additionalTypes, checkResource))
+				if (encryptedResource.CouldBeResourceDecrypter(calledMethod, null, checkResource))
 					return calledMethod;
 			}
 
@@ -157,13 +152,25 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			if (encryptedResource.Resource == null)
 				return null;
 			DeobUtils.DecryptAndAddResources(module, encryptedResource.Resource.Name.String, () => {
+				byte[] decrypted;
+				try {
+					decrypted = encryptedResource.Decrypt();
+				}
+				catch {
+					return null;
+				}
+
+				if (decrypted.Length < 64)
+					throw new Exception("Decrypted resource data has length " + decrypted.Length);
+				if (decrypted[0] == 0x4D && decrypted[1] == 0x5A && decrypted[62] == 0 && decrypted[63] == 0)
+					return decrypted;
 
 				try {
-					return QuickLZ.Decompress(encryptedResource.Decrypt());
+					return QuickLZ.Decompress(decrypted);
 				}
 				catch {
 					try {
-						return DeobUtils.Inflate(encryptedResource.Decrypt(), true);
+						return DeobUtils.Inflate(decrypted, true);
 					}
 					catch {
 						return null;
