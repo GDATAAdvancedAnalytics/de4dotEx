@@ -110,6 +110,7 @@ internal class PatternMatcher
 
 		return (ins.IsLdloc() && patIns.IsLdloc())
 			|| (ins.IsStloc() && patIns.IsStloc())
-			|| (ins.IsConditionalBranch() && patOpCode.Name.Replace(".s", "") == ins.OpCode.Name.Replace(".s", ""));
+			|| (ins.IsConditionalBranch() && patOpCode.Name.Replace(".s", "") == ins.OpCode.Name.Replace(".s", ""))
+			|| (ins.OpCode.Code is Code.Leave or Code.Leave_S && patOpCode.Code is Code.Leave or Code.Leave_S);
 	}
 }
