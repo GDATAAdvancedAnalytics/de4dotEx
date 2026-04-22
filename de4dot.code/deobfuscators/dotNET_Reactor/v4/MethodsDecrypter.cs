@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using dnlib.IO;
 using dnlib.DotNet;
 using dnlib.DotNet.MD;
@@ -126,15 +127,23 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 
 			var methodsDataReader = ByteArrayDataReaderFactory.CreateReader(methodsData);
 
-			int tmp = methodsDataReader.ReadInt32();
-			if ((tmp & 0xFF000000) == 0x06000000)
-				methodsDataReader.ReadInt32();
-			else
-				methodsDataReader.Position -= 4;
+			int tmp;
+			if (FindBinaryReaderMethod(simpleDeobfuscator, out var popCallsCount) && popCallsCount > 3)
+				for (var i = 0; i < popCallsCount; i++)
+					methodsDataReader.ReadInt32();
+			else {
+				tmp = methodsDataReader.ReadInt32();
+				if ((tmp & 0xFF000000) == 0x06000000)
+					methodsDataReader.ReadInt32();
+				else
+					methodsDataReader.Position -= 4;
+			}
 
 			int patchCount = methodsDataReader.ReadInt32();
-			int mode = methodsDataReader.ReadInt32();
+			if (patchCount > methodsDataReader.BytesLeft / 8)
+				patchCount = methodsDataReader.ReadInt32();
 
+			int mode = methodsDataReader.ReadInt32();
 			tmp = methodsDataReader.ReadInt32();
 			methodsDataReader.Position -= 4;
 			if ((tmp & 0xFF000000) == 0x06000000) {
@@ -252,6 +261,53 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 
 			return true;
 		}
+
+		// Adapted from SychicBoy's NETReactorSlayer
+		private bool FindBinaryReaderMethod(ISimpleDeobfuscator simpleDeobfuscator, out int popCallsCount) {
+            popCallsCount = 0;
+            var decrypterMethod = encryptedResource.Method;
+            var calls = decrypterMethod.Body.Instructions
+                .Where(x => x.OpCode == OpCodes.Callvirt && x.Operand is MethodDef md && md.MethodSig.RetType.FullName == "System.Int32")
+                .Select(x => x.Operand)
+                .Cast<MethodDef>();
+            foreach (var method in calls)
+                try {
+                    simpleDeobfuscator.Deobfuscate(method);
+                    if (method.Body.Instructions.Count != 4)
+                        continue;
+
+                    if (!method.Body.Instructions[0].IsLdarg()
+                        || method.Body.Instructions[1].OpCode != OpCodes.Ldfld
+                        || method.Body.Instructions[2].OpCode.Code is not (Code.Callvirt or Code.Call)
+                        || method.Body.Instructions[3].OpCode != OpCodes.Ret)
+                        continue;
+
+                    if (!method.Body.Instructions[2].Operand.ToString()!.Contains("System.Int32"))
+                        continue;
+
+                    for (var i = 0; i < decrypterMethod.Body.Instructions.Count; i++)
+                        try {
+                            if (!decrypterMethod.Body.Instructions[i].IsLdloc()
+                                || decrypterMethod.Body.Instructions[i + 1].OpCode != OpCodes.Callvirt
+                                || decrypterMethod.Body.Instructions[i + 1].Operand is not MethodDef calledMethod
+                                || decrypterMethod.Body.Instructions[i + 2].OpCode != OpCodes.Pop)
+                                continue;
+
+                            if (MethodEqualityComparer.CompareDeclaringTypes.Equals(calledMethod, method))
+                                popCallsCount++;
+                        }
+                        catch {
+	                        // ignored
+                        }
+
+                    return true;
+                }
+                catch {
+	                // ignored
+                }
+
+            return false;
+        }
 
 		public static bool IsNewer45Decryption(MethodDef method) {
 			if (method == null || method.Body == null)
