@@ -147,9 +147,9 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			ModuleDefMD module;
 			Inflater inflater;
 
-			public Decrypter3(ModuleDefMD module, MethodDef decryptMethod) {
+			public Decrypter3(ModuleDefMD module, MethodDef decryptMethod, ISimpleDeobfuscator deobfuscator) {
 				this.module = module;
-				inflater = InflaterCreator.Create(decryptMethod, true);
+				inflater = InflaterCreator.Create(decryptMethod, deobfuscator, true);
 			}
 
 			public byte[] Decrypt(byte[] encryptedData) {
@@ -199,6 +199,80 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			}
 		}
 
+		// v10/v11
+		class Decrypter4 : IDecrypter {
+			ModuleDefMD module;
+			Inflater inflater;
+
+			public Decrypter4(ModuleDefMD module, MethodDef decryptMethod, ISimpleDeobfuscator deobfuscator) {
+				this.module = module;
+				inflater = InflaterCreator.Create(decryptMethod, deobfuscator, true);
+			}
+
+			public byte[] Decrypt(byte[] encryptedData) {
+				int index = 0;
+				ParseHeader(GetHeaderData(encryptedData, ref index, out var iv),
+					out var key,
+					out var flag,
+					out var cipherType);
+				bool isEncrypted = (flag & 2) != 0;
+				bool isCompressed = (flag & 1) != 0;
+
+				byte[] data = new byte[encryptedData.Length - index];
+				Array.Copy(encryptedData, index, data, 0, encryptedData.Length - index);
+
+				if (isEncrypted) {
+					if (cipherType == 1)
+						data = DeobUtils.DesDecrypt(data, 0, data.Length, key, iv);
+					else if (cipherType is 2 or 4)
+						data = DeobUtils.AesDecrypt(data, key, iv);
+					else if (cipherType == 3)
+						data = DeobUtils.Des3Decrypt(data, key, iv);
+					else
+						throw new Exception($"Unsupported cipher type {cipherType}");
+				}
+
+				if (isCompressed) {
+					data = DeobUtils.Inflate(data, inflater);
+				}
+
+				return data;
+			}
+
+			byte[] GetHeaderData(byte[] encryptedData, ref int index, out byte[] iv) {
+				var headerData = new byte[BitConverter.ToUInt16(encryptedData, index)];
+				Array.Copy(encryptedData, index + 2, headerData, 0, headerData.Length);
+				index += headerData.Length + 2;
+
+				iv = new byte[encryptedData[index++]];
+				Array.Copy(encryptedData, index, iv, 0, iv.Length);
+				index += iv.Length;
+				for (int i = 0; i < headerData.Length; i++)
+					headerData[i] ^= iv[i % iv.Length];
+
+				return headerData;
+			}
+
+			void ParseHeader(byte[] headerData, out byte[] key, out byte flag, out byte cipherType) {
+				var reader = new BinaryReader(new MemoryStream(headerData));
+
+				/*var license =*/ reader.ReadString();
+				flag = reader.ReadByte();
+				cipherType = reader.ReadByte();
+				byte pubKeyOffset = reader.ReadByte();
+
+				key = reader.ReadBytes(reader.ReadByte());
+				if (pubKeyOffset < 64) {
+					if (reader.BaseStream.Position < reader.BaseStream.Length)
+						throw new Exception("Expected end of header");
+				}
+				else {
+					Array.Copy(module.Assembly.PublicKey.Data, pubKeyOffset + 12, key, 0, key.Length);
+					//key[5] |= 0x80;
+				}
+			}
+		}
+
 		public MethodDef DecryptMethod {
 			set {
 				if (value == null)
@@ -222,7 +296,8 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				var calledMethod = instr.Operand as MethodDef;
 				if (calledMethod == null || !calledMethod.IsStatic || calledMethod.Body == null)
 					continue;
-				if (!DotNetUtils.IsMethod(calledMethod, "System.IO.MemoryStream", "(System.IO.Stream)"))
+				if (!DotNetUtils.IsMethod(calledMethod, "System.IO.MemoryStream", "(System.IO.Stream)")
+				    && !DotNetUtils.IsMethod(calledMethod, "System.IO.Stream", "(System.IO.Stream)"))
 					continue;
 
 				return calledMethod;
@@ -238,8 +313,10 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 		}
 
 		IDecrypter CreateDecrypter(byte[] encryptedData) {
+			if (decryptMethod != null && DeobUtils.HasInteger(decryptMethod, 64))
+				return new Decrypter4(module, decryptMethod, simpleDeobfuscator);
 			if (decryptMethod != null && DeobUtils.HasInteger(decryptMethod, 6))
-				return new Decrypter3(module, decryptMethod);
+				return new Decrypter3(module, decryptMethod, simpleDeobfuscator);
 			if (IsV30(encryptedData))
 				return new Decrypter1(module);
 			return new Decrypter2(module);

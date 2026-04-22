@@ -17,17 +17,25 @@
     along with de4dot.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using ICSharpCode.SharpZipLib;
 using ICSharpCode.SharpZipLib.Zip.Compression;
 
 namespace de4dot.code.deobfuscators.Babel_NET {
 	class BabelInflater : Inflater {
-		int magic;
+		static readonly int[] DefaultMapping = new int[] { 1, 5, 6 }; // STORED_BLOCK (0), STATIC_TREES (1), DYN_TREES (2)
+		readonly int _typeSize;
+		readonly int _magic;
+		readonly int[] _blockTypeMapping;
 
-		public BabelInflater(bool noHeader, int magic) : base(noHeader) => this.magic = magic;
+		public BabelInflater(bool noHeader, int typeSize, int magic, int[] blockTypeMapping) : base(noHeader) {
+			_typeSize = typeSize;
+			_magic = magic;
+			_blockTypeMapping = blockTypeMapping ?? DefaultMapping;
+		}
 
 		protected override bool ReadHeader(ref bool isLastBlock, out int blockType) {
-			const int numBits = 4;
+			int numBits = 1 + _typeSize;
 
 			int type = input.PeekBits(numBits);
 			if (type < 0) {
@@ -38,12 +46,11 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 
 			if ((type & 1) != 0)
 				isLastBlock = true;
-			switch (type >> 1) {
-			case 1: blockType = STORED_BLOCK; break;
-			case 5: blockType = STATIC_TREES; break;
-			case 6: blockType = DYN_TREES; break;
-			default: throw new SharpZipBaseException("Unknown block type: " + type);
-			}
+
+			blockType = Array.IndexOf(_blockTypeMapping, type >> 1);
+			if (blockType == -1)
+				throw new SharpZipBaseException("Unknown block type: " + type);
+
 			return true;
 		}
 
@@ -52,7 +59,7 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				return false;
 			input.DropBits(16);
 
-			uncomprLen ^= magic;
+			uncomprLen ^= _magic;
 
 			return true;
 		}
