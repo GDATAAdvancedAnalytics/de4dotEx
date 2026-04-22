@@ -37,7 +37,7 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 
 		public static EmbeddedResource FindEmbeddedResource(ModuleDefMD module, TypeDef decrypterType, Action<MethodDef> fixMethod) {
 			foreach (var method in decrypterType.Methods) {
-				if (!DotNetUtils.IsMethod(method, "System.String", "()"))
+				if (!DotNetUtils.IsMethod(method, "System.String", "()") && !DotNetUtils.IsMethod(method, "System.String", "(System.Int32)"))
 					continue;
 				if (!method.IsStatic)
 					continue;
@@ -66,9 +66,18 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			if (!GetXorKey2(method, out int xorKey))
 				return null;
 
+			int xorKeyArg = 0;
+			foreach (var methodCaller in method.DeclaringType.Methods) {
+				if (!methodCaller.HasBody) continue;
+
+				var insns = methodCaller.Body.Instructions;
+				if (GetXorKeyArgument(methodCaller.Body.Instructions, ref xorKeyArg))
+					break;
+			}
+
 			var sb = new StringBuilder(encryptedString.Length);
 			foreach (var c in encryptedString)
-				sb.Append((char)(c ^ xorKey));
+				sb.Append((char)(c ^ xorKey ^ xorKeyArg));
 			return DotNetUtils.GetResource(module, sb.ToString()) as EmbeddedResource;
 		}
 
@@ -94,6 +103,18 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			return false;
 		}
 
+		static bool GetXorKeyArgument(IList<Instruction> insns, ref int xorKey) {
+			for (var i = 0; i < insns.Count - 4; i++) {
+				if (insns[i].OpCode == OpCodes.Ldsfld && insns[i + 1].IsLdcI4()
+				                                      && insns[i + 2].OpCode == OpCodes.Callvirt
+				                                      && insns[i + 3].OpCode == OpCodes.Callvirt) {
+					xorKey = insns[i + 1].GetLdcI4Value();
+					return true;
+				}
+			}
+			return false;
+		}
+
 		public static bool FindRegisterMethod(TypeDef type, out MethodDef regMethod, out MethodDef handler) {
 			foreach (var method in type.Methods) {
 				if (!method.IsStatic || method.Body == null)
@@ -114,6 +135,8 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 					handler = DotNetUtils.GetMethod(type, handlerRef);
 					if (handler == null)
 						continue;
+					if (handler.Body != null && handler.Body.Instructions.Count == 4 && handler.Body.Instructions[2].OpCode.Code == Code.Call)
+						handler = (MethodDef)handler.Body.Instructions[2].Operand;
 					if (handler.Body == null || handler.Body.ExceptionHandlers.Count != 1)
 						continue;
 

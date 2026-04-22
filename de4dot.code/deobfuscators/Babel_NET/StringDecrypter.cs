@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
@@ -145,11 +146,11 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				return null;
 			if (type.NestedTypes.Count > 2)
 				return null;
-			if (type.Fields.Count > 1)
+			if (type.Fields.Count > 3)
 				return null;
 
 			foreach (var nested in type.NestedTypes) {
-				var info = CheckNested(type, nested);
+				var info = CheckNested(type, nested) ?? CheckNested2(type, nested);
 				if (info != null)
 					return info;
 			}
@@ -277,11 +278,37 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			return null;
 		}
 
+		IDecrypterInfo CheckNested2(TypeDef type, TypeDef nested) {
+			// 10.0/11.0, possibly earlier versions too
+			if (nested.HasProperties || nested.HasEvents)
+				return null;
+
+			var decrypterBuilderMethod = DotNetUtils.GetMethod(nested, "System.Reflection.Emit.MethodBuilder", "(System.Reflection.Emit.TypeBuilder)");
+			if (decrypterBuilderMethod == null)
+				return null;
+
+			var cctor = type.FindStaticConstructor();
+			if (cctor == null) return null;
+			resourceDecrypter.DecryptMethod = ResourceDecrypter.FindDecrypterMethod(cctor);
+
+			var decrypter = DotNetUtils.GetMethod(type, "System.String", "(System.Int32)");
+			if (decrypter is not { IsStatic: true })
+				return null;
+
+			simpleDeobfuscator.Deobfuscate(decrypterBuilderMethod);
+			return new DecrypterInfoV3(resourceDecrypter) {
+				Decrypter = decrypter,
+				OffsetCalcInstructions = GetOffsetCalcInstructions(decrypterBuilderMethod),
+			};
+		}
+
 		class ReflectionToDNLibMethodCreator {
 			MethodDef method;
 			List<Instruction> instructions = new List<Instruction>();
 			InstructionEmulator emulator;
 			int index;
+			private int _skipSwitchLoopIndex = -1;
+			private byte[] _xorValues;
 
 			class UserValue : UnknownValue {
 				public readonly object obj;
@@ -294,10 +321,41 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			}
 
 			public List<Instruction> Instructions => instructions;
+			public int ParsedValue { get; private set; }
 
 			public ReflectionToDNLibMethodCreator(MethodDef method) {
 				this.method = method;
 				emulator = new InstructionEmulator(method);
+				AnalyzeSwitch();
+			}
+
+			private void AnalyzeSwitch() {
+				var switchIns = method.Body.Instructions.FirstOrDefault(ins => ins.OpCode.Code == Code.Switch);
+				if (switchIns == null)
+					return;
+
+				for (int i = 0; i < method.Body.Instructions.IndexOf(switchIns); i++) {
+					if (method.Body.Instructions[i].OpCode.Code is Code.Bge or Code.Bge_S) {
+						_skipSwitchLoopIndex = method.Body.Instructions.IndexOf((Instruction)method.Body.Instructions[i].Operand);
+						break;
+					}
+				}
+				if (_skipSwitchLoopIndex == -1)
+					throw new Exception("decrypterBuilderMethod analysis failed");
+
+				int x = 0;
+				_xorValues = new byte[((Instruction[])switchIns.Operand).Length];
+				foreach (var targetIns in (Instruction[])switchIns.Operand) {
+					_xorValues[x++] = (byte)GetSwitchXor(method.Body.Instructions.IndexOf(targetIns));
+				}
+			}
+
+			private int GetSwitchXor(int caseStart) {
+				for (int i = caseStart; i < Math.Min(caseStart + 10, method.Body.Instructions.Count); i++) {
+					if (method.Body.Instructions[i].IsLdcI4())
+						return method.Body.Instructions[i].GetLdcI4Value();
+				}
+				throw new Exception("Ldc.i4 not found in switch case");
 			}
 
 			public bool Create() {
@@ -364,6 +422,20 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 						emulator.Push(new UserValue((IField)instr.Operand));
 						break;
 
+					case Code.Switch:
+						emulator.Pop();
+						if (_xorValues != null) {
+							// Directly handle the xoring logic here and skip it.
+							array = emulator.GetLocal(1);
+							if (array is UserValue { obj: byte[] b }) {
+								for (int i = 0; i < b.Length; i++) {
+									b[i] ^= _xorValues[i % _xorValues.Length];
+								}
+							}
+							index = _skipSwitchLoopIndex;
+						}
+						break;
+
 					default:
 						emulator.Emulate(instr);
 						break;
@@ -386,7 +458,8 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 					return true;
 				}
 				else if (fn == "System.Int32 System.Int32::Parse(System.String)") {
-					emulator.Push(new Int32Value(int.Parse(((StringValue)emulator.Pop()).value)));
+					ParsedValue = int.Parse(((StringValue)emulator.Pop()).value);
+					emulator.Push(new Int32Value(ParsedValue));
 					return true;
 				}
 				else if (fn == "System.String[] System.String::Split(System.Char[])") {
@@ -449,8 +522,14 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			int endInstr = index - 1;
 
 			var transformInstructions = new List<Instruction>();
-			for (int i = startInstr; i <= endInstr; i++)
-				transformInstructions.Add(instrs[i]);
+			for (int i = startInstr; i <= endInstr; i++) {
+				if (instrs[i].IsLdloc() && creator.ParsedValue != 0) {
+					transformInstructions.Add(OpCodes.Ldc_I4.ToInstruction(creator.ParsedValue));
+				}
+				else
+					transformInstructions.Add(instrs[i]);
+			}
+
 			return transformInstructions;
 		}
 
@@ -533,7 +612,7 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				return;
 
 			if (decrypterInfo.NeedsResource) {
-				encryptedResource = BabelUtils.FindEmbeddedResource(module, decrypterType);
+				encryptedResource = BabelUtils.FindEmbeddedResource(module, decrypterType, method => simpleDeobfuscator.Deobfuscate(method));
 				if (encryptedResource == null)
 					return;
 			}
