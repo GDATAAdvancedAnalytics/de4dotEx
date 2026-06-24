@@ -18,6 +18,9 @@
 */
 
 using System.Collections.Generic;
+#if !NETFRAMEWORK
+using System.Runtime.InteropServices;
+#endif
 using dnlib.DotNet.Emit;
 
 namespace de4dot.blocks.cflow {
@@ -56,7 +59,7 @@ namespace de4dot.blocks.cflow {
 				case Code.Leave_S:
 				case Code.Endfinally:
 				case Code.Pop:
-					instructionExpressionFinder.Initialize(block, false);
+					instructionExpressionFinder.Initialize(block);
 					if (!instructionExpressionFinder.Find(i))
 						continue;
 					if (!OkInstructions(block, instructionExpressionFinder.DeadInstructions))
@@ -310,67 +313,195 @@ namespace de4dot.blocks.cflow {
 		}
 
 		class InstructionExpressionFinder {
-			List<int> deadInstructions = new List<int>();
-			Block block = null!;
-			bool methodHasReturnValue;
+			Block _block = null!;
+			int _index;
 
-			public List<int> DeadInstructions => deadInstructions;
+			public List<int> DeadInstructions { get; } = new();
 
-			public void Initialize(Block block, bool methodHasReturnValue) {
-				deadInstructions.Clear();
-				this.block = block;
-				this.methodHasReturnValue = methodHasReturnValue;
+			public void Initialize(Block block) {
+				DeadInstructions.Clear();
+				_block = block;
 			}
 
-			public bool Find(int index) => Find(ref index, true);
+#if NETFRAMEWORK
+			class FindFrame {
+#else
+			struct FindFrame {
+#endif
+				public int Needed;
+				public int Pushes; // saved across the recursive call site
+				public bool AddIt;
+				public bool IsResumption;
+			}
 
+			/*
+			Original equivalent recursive algorithm (easier to understand, but also easily broken by causing a stack overflow):
 			bool Find(ref int index, bool addIt) {
-				if (index < 0)
-					return false;
+			   	if (index < 0)
+			   		return false;
 
-				var startInstr = block.Instructions[index];
-				CalculateStackUsage(startInstr.Instruction, false, out int startInstrPushes, out int startInstrPops);
+			   	var startInstr = block.Instructions[index];
+			   	CalculateStackUsage(startInstr.Instruction, out _, out int needed);
 
-				// Don't add it if it clears the stack (eg. leave)
-				if (addIt && startInstrPops >= 0)
-					AddIndex(index);
+			   	// Don't add it if it clears the stack (eg. leave)
+			   	if (addIt && needed >= 0)
+			   		AddIndex(index);
+			   	if (needed == 0)
+			   		return true;
 
-				if (startInstrPops == 0)
-					return true;
+			   	while (index > 0) {
+			   		var instr = block.Instructions[index - 1];
+			   		if (needed == 0 && instr.OpCode.OpCodeType != OpCodeType.Prefix)
+			   			break;
 
-				while (index > 0) {
-					var instr = block.Instructions[index - 1];
-					if (startInstrPops == 0 && instr.OpCode.OpCodeType != OpCodeType.Prefix)
-						break;
+			   		CalculateStackUsage(instr.Instruction, out int pushes, out int pops);
+			   		if (pops < 0)
+			   			break; // eg. leave
+			   		index--;
 
-					CalculateStackUsage(instr.Instruction, methodHasReturnValue, out int pushes, out int pops);
-					if (pops < 0)
-						break;	// eg. leave
-					index--;
+			   		if (pops > 0) {
+			   			// if instr uses any args
+			   			// -- Case for otherExpr true:
+			   			// ldc.i4 1
+			   			// ldc.i4 2  <-- belongs to otherExpr, not added
+			   			// pop  <-- "otherExpr", not added
+			   			// pop  <-- our starting point
+			   			// -- Case for otherExpr false:
+			   			// ldc.i4 1  <-- AddIndex() called by recursive Find()
+			   			// ldc.i4 2  <-- AddIndex() called by recursive Find()
+			   			// add  <-- AddIndex() called by recursive Find()
+			   			// pop  <-- our starting point
+			   			bool otherExpr = pushes == 0;
+			   			if (!Find(ref index, addIt && !otherExpr))
+			   				break;
+			   		}
+			   		else if (pushes != 0) {
+			   			if (addIt)
+			   				AddIndex(index);
+			   		}
 
-					if (pops > 0) {	// if instr uses any args
-						bool otherExpr = pops > 0 && pushes == 0;
-						if (!Find(ref index, addIt && !otherExpr))
-							break;
-					}
-					else if (pushes != 0 || pops != 0) {
-						if (addIt)
-							AddIndex(index);
-					}
-					if (pushes > 0 && startInstrPops >= 0) {
-						if (pushes > startInstrPops)
-							return false;
-						startInstrPops -= pushes;
-					}
-				}
+			   		if (pushes > 0 && needed >= 0) {
+			   			if (pushes > needed)
+			   				return false;
+			   			needed -= pushes;
+			   		}
+			   	}
 
-				return startInstrPops <= 0;
+			   	return needed <= 0;
+			   }
+			 */
+			public bool Find(int index) {
+			    if (index < 0)
+			        return false;
+
+			    var startInstr = _block.Instructions[index];
+			    CalculateStackUsage(startInstr.Instruction, out _, out int neededInitial);
+
+			    if (neededInitial >= 0)
+			        AddIndex(index);
+			    if (neededInitial == 0)
+			        return true;
+
+			    _index = index;
+
+			    var stack = new List<FindFrame> { new() { Needed = neededInitial, AddIt = true } };
+			    bool childResult = false;
+
+			    while (stack.Count > 0) {
+				    #if NETFRAMEWORK
+				    var f = stack[stack.Count - 1];
+					#else
+				    ref var f = ref CollectionsMarshal.AsSpan(stack)[^1];
+				    #endif
+
+			        if (!f.IsResumption) {
+			            // Equivalent to: while (_index > 0) { ... }
+			            if (f.Needed != 0 && _index > 0) {
+			                var instr = _block.Instructions[_index - 1];
+
+			                if (f.Needed == 0 && instr.OpCode.OpCodeType != OpCodeType.Prefix) {
+			                    childResult = true;
+			                    stack.RemoveAt(stack.Count - 1);
+			                    continue;
+			                }
+
+			                CalculateStackUsage(instr.Instruction, out int pushes, out int pops);
+
+			                if (pops < 0) {
+			                    childResult = f.Needed <= 0;
+			                    stack.RemoveAt(stack.Count - 1);
+			                    continue;
+			                }
+
+			                _index--;
+
+			                if (pops > 0) {
+			                    // Save state and push child frame (was: Find(ref index, addIt && !otherExpr))
+			                    bool otherExpr = pushes == 0;
+			                    f.Pushes = pushes;
+			                    f.IsResumption = true;
+
+			                    var childInstr = _block.Instructions[_index];
+			                    CalculateStackUsage(childInstr.Instruction, out _, out int childNeeded);
+
+			                    bool childAddIt = f.AddIt && !otherExpr;
+			                    if (childAddIt && childNeeded >= 0)
+			                        AddIndex(_index);
+
+			                    if (childNeeded == 0) {
+			                        // Child returns immediately - skip pushing, handle inline
+			                        childResult = true;
+			                        f.IsResumption = true;
+			                        // fall through to resumption on next iteration
+			                    } else {
+			                        stack.Add(new FindFrame {
+			                            Needed = childNeeded,
+			                            AddIt = childAddIt
+			                        });
+			                        // do the frame we just added next
+			                    }
+			                } else if (pushes != 0) {
+			                    if (f.AddIt)
+			                        AddIndex(_index);
+			                    if (!ApplyPushes(ref f, pushes)) {
+				                    childResult = false;
+				                    f.IsResumption = true;
+			                    }
+			                }
+			                // loop continues (next instruction)
+			            } else {
+			                // Inner while loop condition false: normal exit
+			                childResult = f.Needed <= 0;
+			                stack.RemoveAt(stack.Count - 1);
+			            }
+			        } else {  // Resuming after child returned
+			            if (!childResult || !ApplyPushes(ref f, f.Pushes)) {
+				            // Child search was unsuccessful -> propagate failure upwards
+				            childResult = false;
+				            stack.RemoveAt(stack.Count - 1);
+				            continue;
+			            }
+			            f.IsResumption = false;  // continue the inner while loop
+			        }
+			    }
+
+			    return childResult;
 			}
 
-			void AddIndex(int index) => deadInstructions.Add(index);
+			static bool ApplyPushes(ref FindFrame f, int pushes) {
+				if (pushes > 0 && f.Needed >= 0) {
+					if (pushes > f.Needed) {
+						return false;
+					}
+					f.Needed -= pushes;
+				}
+				return true;
+			}
+
+			void AddIndex(int index) => DeadInstructions.Add(index);
 		}
 
-		static void CalculateStackUsage(Instruction instr, bool methodHasReturnValue, out int pushes, out int pops) =>
+		static void CalculateStackUsage(Instruction instr, out int pushes, out int pops) =>
 			instr.CalculateStackUsage(false, out pushes, out pops);
 	}
 }

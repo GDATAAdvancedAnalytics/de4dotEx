@@ -43,10 +43,23 @@ jobs:
 
           git clone --depth 1 --branch $env:BEAENGINE_TAG https://github.com/BeaEngine/beaengine.git beaengine
 
-          # Remove cmake malpractice
-          (Get-Content beaengine/CMakeLists.txt) |
+          $cmakelists = 'beaengine/CMakeLists.txt'
+
+          # Remove cmake malpractice (would prevent -DCMAKE_MSVC_RUNTIME_LIBRARY)
+          (Get-Content $cmakelists) |
             Where-Object { $_ -notmatch '\s*list\s*\(APPEND\s+BEA_FLAGS\s+/M' } |
-            Set-Content beaengine/CMakeLists.txt
+            Set-Content $cmakelists
+
+          # Compatibility with 2026
+          (Get-Content $cmakelists) |
+            ForEach-Object {
+              if ($_ -match '^\s*cmake_minimum_required\s*\(') {
+                @('cmake_minimum_required(VERSION 3.5)',
+                  'cmake_policy(VERSION 3.5)')
+              } else {
+                $_
+              }
+            } | Set-Content -Encoding UTF8 $cmakelists
 
           # Win32 for .NET 4.8
           cmake -S beaengine -B build-beaengine-32 `
