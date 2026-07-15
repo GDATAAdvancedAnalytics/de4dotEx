@@ -53,6 +53,8 @@ namespace de4dot.code.deobfuscators.DeepSea {
 			if (method == null) {
 				if (callInstr.Operand is MethodSpec ms)
 					method = ms.Method as MethodDef;
+				if (callInstr.Operand is MemberRef mref)
+					method = mref.ResolveMethod();
 				if (method == null)
 					return false;
 			}

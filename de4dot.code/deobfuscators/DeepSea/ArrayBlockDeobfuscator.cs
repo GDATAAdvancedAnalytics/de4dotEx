@@ -67,20 +67,22 @@ namespace de4dot.code.deobfuscators.DeepSea {
 			constantsReader = null;
 			var instrs = block.Instructions;
 			for (int i = 0; i < instrs.Count; i++) {
-				bool ch = Deobfuscate1(block, i);
-				if (ch) {
+				if (Deobfuscate1(block, i)) {
 					modified = true;
 					continue;
 				}
 
-				ch = Deobfuscate2(block, i);
-				if (ch) {
+				if (Deobfuscate2(block, i)) {
 					modified = true;
 					continue;
 				}
 
-				ch = Deobfuscate3(block, i);
-				if (ch) {
+				if (Deobfuscate3(block, i)) {
+					modified = true;
+					continue;
+				}
+
+				if (Deobfuscate4(block, i)) {
 					modified = true;
 					continue;
 				}
@@ -203,6 +205,42 @@ namespace de4dot.code.deobfuscators.DeepSea {
 			i += 2;
 			if (!constants.GetInt32(ref i, out int value))
 				return false;
+
+			if (i >= instrs.Count)
+				return false;
+			var stelem = instrs[i];
+			if (!IsStelem(info, stelem.OpCode.Code))
+				return false;
+
+			block.Remove(start, i - start + 1);
+			return true;
+		}
+
+		bool Deobfuscate4(Block block, int i) {
+			var instrs = block.Instructions;
+			if (i + 1 >= instrs.Count)
+				return false;
+
+			int start = i;
+			var ldsfld = instrs[i];
+			if (ldsfld.OpCode.Code != Code.Ldsfld)
+				return false;
+			var info = arrayBlockState.GetFieldInfo(ldsfld.Operand as IField);
+			if (info == null)
+				return false;
+
+			if (!instrs[i + 1].IsLdcI4())
+				return false;
+
+			for (; i < instrs.Count; i++) {
+				if (instrs[i].OpCode.FlowControl != FlowControl.Next)
+					return false;
+				if (instrs[i].OpCode.Code == Code.Ldsfld
+						&& arrayBlockState.GetFieldInfo(instrs[i].Operand as IField) == null)
+					return false;
+				if (instrs[i].OpCode.Code is Code.Stelem_I1 or Code.Stelem_I2 or Code.Stelem_I4)
+					break;
+			}
 
 			if (i >= instrs.Count)
 				return false;
