@@ -110,19 +110,27 @@ namespace de4dot.code.deobfuscators.DeepSea {
 				if (!ldci4.IsLdcI4())
 					continue;
 				i++;
+				bool hasCall = true;
 				var instrs = DotNetUtils.GetInstructions(instructions, i, OpCodes.Newarr, OpCodes.Dup, OpCodes.Ldtoken, OpCodes.Call, OpCodes.Stsfld);
-				if (instrs == null)
-					continue;
+				if (instrs == null) {
+					instrs = DotNetUtils.GetInstructions(instructions, i, OpCodes.Newarr, OpCodes.Dup, OpCodes.Ldtoken, OpCodes.Stsfld);
+					if (instrs == null)
+						continue;
+					hasCall = false;
+				}
 
 				var arrayInitField = instrs[2].Operand as FieldDef;
 				if (arrayInitField == null || arrayInitField.InitialValue == null || arrayInitField.InitialValue.Length == 0)
 					continue;
 
-				var calledMethod = instrs[3].Operand as IMethod;
-				if (calledMethod == null || calledMethod.FullName != "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)")
-					continue;
+				if (hasCall) {
+					var calledMethod = instrs[3].Operand as IMethod;
+					if (calledMethod == null || calledMethod.FullName !=
+					    "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)")
+						continue;
+				}
 
-				var targetField = instrs[4].Operand as FieldDef;
+				var targetField = instrs[hasCall ? 4 : 3].Operand as FieldDef;
 				if (targetField == null || targetField.FieldType.GetElementType() != ElementType.SZArray)
 					continue;
 				var etype = ((SZArraySig)targetField.FieldType).Next.GetElementType();
@@ -186,17 +194,19 @@ namespace de4dot.code.deobfuscators.DeepSea {
 					if (ldtoken.Operand != info.arrayInitField)
 						continue;
 					var call = instrs[i + 4];
-					if (call.OpCode.Code != Code.Call)
-						continue;
-					var calledMethod = call.Operand as IMethod;
-					if (calledMethod == null || calledMethod.FullName != "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)")
-						continue;
-					var stsfld = instrs[i + 5];
+					bool hasCall = call.OpCode.Code == Code.Call;
+					if (hasCall) {
+						var calledMethod = call.Operand as IMethod;
+						if (calledMethod == null || calledMethod.FullName !=
+						    "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)")
+							continue;
+					}
+					var stsfld = instrs[i + (hasCall ? 5 : 4)];
 					if (stsfld.OpCode.Code != Code.Stsfld)
 						continue;
 					if (stsfld.Operand != info.field)
 						continue;
-					block.Remove(i, 6);
+					block.Remove(i, hasCall ? 6 : 5);
 					i--;
 					removedSomething = true;
 				}
