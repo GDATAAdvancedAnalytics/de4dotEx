@@ -165,7 +165,8 @@ namespace de4dot.code.deobfuscators {
 			RestoreBaseType();
 			FixMDHeaderVersion();
 
-			module.Mvid = Guid.NewGuid();
+			// NOTE: Changing Mvid breaks samples where Mason Protector is used as a second layer.
+			//module.Mvid = Guid.NewGuid();
 			module.EnableTypeDefFindCache = cacheState;
 		}
 
@@ -677,7 +678,7 @@ namespace de4dot.code.deobfuscators {
 		public virtual bool IsValidResourceKeyName(string name) => name != null && CheckValidName(name);
 		public virtual void OnWriterEvent(ModuleWriterBase writer, ModuleWriterEvent evt) { }
 		protected void FindAndRemoveInlinedMethods() => RemoveInlinedMethods(InlinedMethodsFinder.Find(module));
-		protected void RemoveInlinedMethods(List<MethodDef> inlinedMethods) =>
+		protected void RemoveInlinedMethods(IEnumerable<MethodDef> inlinedMethods) =>
 			AddMethodsToBeRemoved(new UnusedMethodsFinder(module, inlinedMethods, GetRemovedMethods()).Find(), "Inlined method");
 
 		protected MethodCollection GetRemovedMethods() {

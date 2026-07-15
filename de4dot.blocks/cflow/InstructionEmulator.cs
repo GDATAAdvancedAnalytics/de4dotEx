@@ -367,12 +367,7 @@ namespace de4dot.blocks.cflow {
 			case Code.Conv_Ovf_U8:		Emulate_Conv_Ovf_U8(instr); break;
 			case Code.Conv_Ovf_U8_Un:	Emulate_Conv_Ovf_U8_Un(instr); break;
 
-			case Code.Ldelem_I1: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
-			case Code.Ldelem_I2: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
 			case Code.Ldelem_I8: valueStack.Pop(2); valueStack.Push(Int64Value.CreateUnknown()); break;
-			case Code.Ldelem_U1: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknownUInt8()); break;
-			case Code.Ldelem_U2: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknownUInt16()); break;
-			case Code.Ldelem_U4: valueStack.Pop(2); valueStack.Push(Int32Value.CreateUnknown()); break;
 			case Code.Ldelem:	 valueStack.Pop(2); valueStack.Push(GetUnknownValue(instr.Operand as ITypeDefOrRef)); break;
 
 			case Code.Ldind_I1:	valueStack.Pop(); valueStack.Push(Int32Value.CreateUnknown()); break;
@@ -383,7 +378,7 @@ namespace de4dot.blocks.cflow {
 			case Code.Ldind_U2:	valueStack.Pop(); valueStack.Push(Int32Value.CreateUnknownUInt16()); break;
 			case Code.Ldind_U4:	valueStack.Pop(); valueStack.Push(Int32Value.CreateUnknown()); break;
 
-			case Code.Ldlen:	valueStack.Pop(); valueStack.Push(Int32Value.CreateUnknown()); break;
+			case Code.Ldlen:	Emulate_Ldlen(instr); break;
 			case Code.Sizeof:	Emulate_Sizeof(instr); break;
 
 			case Code.Ldfld:	Emulate_Ldfld(instr); break;
@@ -402,8 +397,15 @@ namespace de4dot.blocks.cflow {
 			case Code.Conv_R8:	Emulate_Conv_R8(instr); break;
 
             case Code.Newarr: Emulate_Newarr(instr); break;
-            case Code.Stelem_I4: Emulate_Stelem_I4(instr); break;
-            case Code.Ldelem_I4: Emulate_Ldelem_I4(instr); break;
+            case Code.Stelem_I1:
+            case Code.Stelem_I2:
+            case Code.Stelem_I4: Emulate_Stelem_I1I2I4(instr); break;
+            case Code.Ldelem_I1:
+            case Code.Ldelem_U1:
+            case Code.Ldelem_I2:
+            case Code.Ldelem_U2:
+            case Code.Ldelem_I4:
+            case Code.Ldelem_U4: Emulate_Ldelem_IU1IU2IU4(instr); break;
 
             case Code.Arglist:
 			case Code.Beq:
@@ -473,8 +475,6 @@ namespace de4dot.blocks.cflow {
 			case Code.Rethrow:
 			case Code.Stelem:
 			case Code.Stelem_I:
-			case Code.Stelem_I1:
-			case Code.Stelem_I2:
 			case Code.Stelem_I8:
 			case Code.Stelem_R4:
 			case Code.Stelem_R8:
@@ -532,9 +532,9 @@ namespace de4dot.blocks.cflow {
         void Emulate_Newarr(Instruction instr)
         {
             var val = valueStack.Pop();
-            if (val.IsInt32() && val is Int32Value { Value: < 500000 } arrSize)
+            if (val.IsInt32() && val is Int32Value { Value: < 500000 and >= 0 } arrSize)
             {
-                List<Value> arr = new List<Value>(arrSize.Value);
+                var arr = new List<Value>(arrSize.Value);
                 for (int i = 0; i < arrSize.Value; i++) {
 	                arr.Add(new UnknownValue());
                 }
@@ -546,27 +546,42 @@ namespace de4dot.blocks.cflow {
             }
         }
 
-        void Emulate_Stelem_I4(Instruction instr)
+        void Emulate_Ldlen(Instruction instr) {
+	        var obj = valueStack.Pop();
+	        valueStack.Push(obj is ObjectValue { obj: List<Value> arr }
+		        ? new Int32Value(arr.Count)
+		        : Int32Value.CreateUnknown());
+        }
+
+        void Emulate_Stelem_I1I2I4(Instruction instr)
         {
             var val = valueStack.Pop();
             var idxValue = valueStack.Pop();
             var obj = valueStack.Pop();
-            if (val is Int32Value &&
-	            idxValue is Int32Value idx && idx.AllBitsValid() &&
-                obj is ObjectValue { obj: List<Value> arr } && arr.Count > idx.Value) {
-	            arr[idx.Value] = val;
+            if (val is Int32Value valI32
+		            && idxValue is Int32Value idx && idx.AllBitsValid()
+	                && obj is ObjectValue { obj: List<Value> arr } && idx.Value >= 0 && arr.Count > idx.Value) {
+	            arr[idx.Value] = instr.OpCode.Code switch {
+		            Code.Stelem_I1 => valI32.ToUInt8(),
+		            Code.Stelem_I2 => valI32.ToUInt16(),
+		            _ => val
+	            };
             }
         }
 
-        void Emulate_Ldelem_I4(Instruction instr) {
+        void Emulate_Ldelem_IU1IU2IU4(Instruction instr) {
 	        var idxValue = valueStack.Pop();
             var obj = valueStack.Pop();
-            if (idxValue is Int32Value idx && idx.AllBitsValid() &&
-                obj is ObjectValue { obj: List<Value> arr } && arr.Count > idx.Value) {
-	            valueStack.Push(arr[idx.Value]);
+            if (idxValue is Int32Value idx && idx.AllBitsValid()
+					&& obj is ObjectValue { obj: List<Value> arr } && idx.Value >= 0 && arr.Count > idx.Value) {
+	            valueStack.Push(arr[idx.Value]); // We assume stelem or whatever populated the array put in the correct size
             }
             else {
-	            valueStack.Push(Int32Value.CreateUnknown());
+	            valueStack.Push(instr.OpCode.Code switch {
+		            Code.Ldelem_U1 => Int32Value.CreateUnknownUInt8(),
+		            Code.Ldelem_U2 => Int32Value.CreateUnknownUInt16(),
+		            _ => Int32Value.CreateUnknown()
+	            });
             }
         }
 

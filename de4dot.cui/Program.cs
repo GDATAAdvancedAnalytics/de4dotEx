@@ -96,6 +96,7 @@ namespace de4dot.cui {
 				new de4dot.code.deobfuscators.VirtualGuard.DeobfuscatorInfo(),
 				new de4dot.code.deobfuscators.Xenocode.DeobfuscatorInfo(),
 				new de4dot.code.deobfuscators.DoubleZero.DeobfuscatorInfo(),
+				new de4dot.code.deobfuscators.MasonProtector.DeobfuscatorInfo(),
 			};
 			var dict = new Dictionary<string, IDeobfuscatorInfo>();
 			foreach (var d in local)

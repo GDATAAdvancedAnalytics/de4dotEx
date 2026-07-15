@@ -132,6 +132,7 @@ namespace de4dot.code.deobfuscators {
 			emulator.Push(theArray);
 
 			var instructions = method.Body.Instructions;
+			FieldDef arrayField = null;
 			int i;
 			for (i = newarrIndex + 1; i < instructions.Count; i++) {
 				var instr = instructions[i];
@@ -154,8 +155,20 @@ namespace de4dot.code.deobfuscators {
 				case Code.Starg_S:
 				case Code.Stsfld:
 				case Code.Stfld:
-					if (emulator.Peek() == theArray && i != newarrIndex + 1 && i != newarrIndex + 2)
-						goto done;
+					if (emulator.Peek() == theArray) {
+						if (i != newarrIndex + 1 && i != newarrIndex + 2)
+							goto done;
+						if (instr.OpCode.Code is Code.Stsfld or Code.Stfld)
+							arrayField = (FieldDef)instr.Operand;
+					}
+					break;
+
+				case Code.Ldsfld:
+				case Code.Ldfld:
+					if (arrayField != null && instr.Operand == arrayField) {
+						emulator.Push(theArray);
+						continue;
+					}
 					break;
 				}
 
