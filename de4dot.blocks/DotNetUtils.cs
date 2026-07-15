@@ -277,7 +277,7 @@ namespace de4dot.blocks {
 			return null;
 		}
 
-		public static IEnumerable<IMethod> GetMethodCalls(MethodDef method) {
+		public static List<IMethod> GetMethodCalls(MethodDef method) {
 			var list = new List<IMethod>();
 			if (method.HasBody) {
 				foreach (var instr in method.Body.Instructions) {

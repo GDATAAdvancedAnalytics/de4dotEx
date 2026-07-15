@@ -177,6 +177,8 @@ namespace de4dot.code {
 		}
 
 		protected override CallResult CreateCallResult(IMethod method, MethodSpec gim, Block block, int callInstrIndex) {
+			if (method is MemberRef memberRef)
+				method = memberRef.ResolveMethod();
 			if (stringDecrypters.Find(method) == null)
 				return null;
 			return new MyCallResult(block, callInstrIndex, method, gim);
