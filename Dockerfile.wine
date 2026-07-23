@@ -1,0 +1,78 @@
+# ==============================================================================
+# STAGE 1: Build the .NET Framework 4.8 Targets natively on Linux
+# ==============================================================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-framework-builder
+WORKDIR /src
+
+# Copy all files
+COPY . .
+
+# Compile de4dot.netframework.sln targeting net48 in Release mode
+# Disable RuntimeIdentifierInference and ValidateExecutableRuntimeIdentifier to bypass architecture compatibility checks on ARM64 hosts
+RUN dotnet build -c Release \
+    -p:SolutionName=de4dot.netframework \
+    -p:RuntimeIdentifierInference=false \
+    -p:ValidateExecutableRuntimeIdentifier=false \
+    de4dot.netframework.sln
+
+# ==============================================================================
+# STAGE 2: Package into Headless Wine Runtime Environment
+# ==============================================================================
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies, 32-bit architecture, and Wine from standard Ubuntu repositories
+# On ARM64 (Apple Silicon Mac), we restrict standard mirrors to arm64 to prevent apt-get update 404 failures on i386 lists.
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then sed -i 's/^deb /deb [arch=arm64] /g' /etc/apt/sources.list; fi && \
+    dpkg --add-architecture i386 && \
+    apt-get update && apt-get install -y \
+    software-properties-common \
+    wget \
+    gnupg2 \
+    cabextract \
+    xvfb \
+    unzip \
+    wine64 \
+    wine \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install winetricks
+RUN wget -O /usr/local/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks && \
+    chmod +x /usr/local/bin/winetricks
+
+# Configure wine environment
+ENV WINEARCH=win64
+ENV WINEPREFIX=/root/.wine
+ENV DISPLAY=:0
+
+# Pre-download official Wine Mono MSI into Wine's global shared directory.
+# During wineboot -u, Wine will automatically find and register this package.
+RUN mkdir -p /usr/share/wine/mono && \
+    wget -q -O /usr/share/wine/mono/wine-mono-7.0.0-x86.msi https://dl.winehq.org/wine/wine-mono/7.0.0/wine-mono-7.0.0-x86.msi
+
+# Initialize wine prefix silently using Xvfb
+RUN Xvfb :0 -screen 0 1024x768x16 & \
+    sleep 2 && \
+    wineboot -u && \
+    wineserver -w
+
+# Set working directory inside the Wine prefix or a dedicated folder
+WORKDIR /app
+
+# Copy the compiled .NET 4.8 targets directly from Stage 1 (dotnet-framework-builder)
+COPY --from=dotnet-framework-builder /src/Release/net48/ .
+
+# Create helper script to launch de4dot through Wine in a virtual frame buffer
+RUN echo '#!/bin/bash\n\
+# Launch virtual framebuffer silently in the background if not already running\n\
+Xvfb :0 -screen 0 1024x768x16 >/dev/null 2>&1 & \n\
+sleep 1\n\
+wine /app/de4dot.exe "$@"' > /usr/local/bin/de4dot && \
+    chmod +x /usr/local/bin/de4dot
+
+# Define default volume for binaries to deobfuscate
+VOLUME ["/work"]
+WORKDIR /work
+
+ENTRYPOINT ["de4dot"]

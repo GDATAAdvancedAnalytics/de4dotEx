@@ -16,8 +16,13 @@
     <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
     <DnlibVersion>4.5.0</DnlibVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(De4DotNetFramework)' != 'true'">
     <SelfContained>true</SelfContained>
   </PropertyGroup>
+
+  <!-- Enable compiling .NET Framework 4.8 targets natively on Linux/macOS using standard .NET SDK -->
+  <ItemGroup Condition=" '$(De4DotNetFramework)' == 'true' ">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>
