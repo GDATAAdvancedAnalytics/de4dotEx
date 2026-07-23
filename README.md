@@ -18,12 +18,13 @@ Binaries
 
 Get binaries from the build server [![](https://github.com/GDATAAdvancedAnalytics/de4dotEx/workflows/CI%20build/badge.svg)](https://github.com/GDATAAdvancedAnalytics/de4dotEx/actions).
 
-Docker Support
-==============
+Docker & MCP Server Support
+===========================
 
-de4dotEx now has fully integrated **Docker containerization** support:
+de4dotEx now has fully integrated **Docker containerization** and native **Model Context Protocol (MCP)** server support:
 
-* **Docker Container:** Build a single container to run de4dotEx natively or inside a cross-platform headless Wine environment. See the [Docker Containerization](#docker-containerization) section below for build and run instructions.
+* **Docker Container:** Build a single container to run de4dotEx natively, as a local stdio MCP server, or as an HTTP Web API microservice. See the [Docker Containerization](#docker-containerization) section below for build and run instructions.
+* **MCP Server:** Integrate de4dotEx directly with AI assistants like Claude Desktop, Cursor, or Windsurf to programmatically deobfuscate binaries. See the [Native C# MCP Server](#native-c-mcp-server) section below for configuration instructions.
 
 It's FREE but there's NO SUPPORT
 ================================
@@ -353,3 +354,64 @@ If you get a warning saying `DEPRECATED: The legacy builder is deprecated` or an
 
 ### Globalization/Localization Issues
 * Both images are configured with native globalization components (`libicu`). If you encounter encoding issues with non-ASCII or obfuscated class/method names, make sure your terminal and volume directories are UTF-8 compliant.
+
+
+Native C# MCP Server
+====================
+
+de4dotEx includes a native **Model Context Protocol (MCP)** server built on **.NET 8.0**. 
+
+By running de4dotEx as an MCP server, you can connect it directly to AI assistants (such as **Claude Desktop**, **Cursor IDE**, **Windsurf**, or the **VS Code MCP Client**). This allows the AI agent to programmatically and automatically deobfuscate .NET assemblies (EXE and DLL) inside directories it is analyzing!
+
+Exposed MCP Tools
+-----------------
+
+### `deobfuscate`
+Deobfuscate and unpack a .NET assembly (EXE or DLL) using de4dotEx.
+
+**Arguments:**
+* `file_path` (string, **required**): The absolute file path of the .NET assembly to deobfuscate.
+* `output_path` (string, *optional*): Custom file path where the cleaned assembly should be written.
+* `options` (string, *optional*): Additional CLI options to pass to the engine (e.g. `"--preserve-tokens"` or `"-str delegate"`).
+
+How to Build the MCP Server
+---------------------------
+
+You can build the MCP server using the standard `dotnet` CLI:
+```bash
+dotnet publish -c Release -f net8.0 -o ./publish-net8.0-mcp de4dot.mcp
+```
+After building, the published files (including the binary and its dependencies) will be placed in the `./publish-net8.0-mcp/` directory.
+
+How to Configure Your AI Client
+-------------------------------
+
+To add de4dotEx to your AI assistant, register it in your client's MCP configuration file (typically `claude_desktop_config.json` for Claude Desktop).
+
+### 1. Claude Desktop Configuration
+Open your Claude Desktop configuration file:
+* **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+* **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add the following block under the `mcpServers` object:
+```json
+{
+  "mcpServers": {
+    "de4dotex": {
+      "command": "dotnet",
+      "args": [
+        "/absolute/path/to/de4dotEx/publish-net8.0-mcp/de4dot.mcp.dll"
+      ]
+    }
+  }
+}
+```
+*(Make sure to replace `/absolute/path/to/de4dotEx/` with the actual absolute path to your cloned repository.)*
+
+### 2. Cursor IDE Configuration
+1. Open Cursor Settings -> **Features** -> **MCP**.
+2. Click **+ Add New MCP Server**.
+3. Name: `de4dotex`
+4. Type: `stdio`
+5. Command: `dotnet /absolute/path/to/de4dotEx/publish-net8.0-mcp/de4dot.mcp.dll`
+}
