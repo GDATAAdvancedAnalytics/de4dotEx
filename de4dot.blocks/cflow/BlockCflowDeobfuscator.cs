@@ -54,7 +54,12 @@ namespace de4dot.blocks.cflow {
 				return false;
 			}
 
-			return branchEmulator.Emulate(block.LastInstr.Instruction);
+			try {
+				return branchEmulator.Emulate(block.LastInstr.Instruction);
+			}
+			catch {
+				return false;
+			}
 		}
 
 		void PopPushedArgs(int stackArgs) {

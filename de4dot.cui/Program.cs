@@ -32,7 +32,7 @@ namespace de4dot.cui {
 		public ExitException(int code) => this.code = code;
 	}
 
-	class Program {
+	public class Program {
 		static IList<IDeobfuscatorInfo> deobfuscatorInfos = CreateDeobfuscatorInfos();
 
 		static IList<IDeobfuscatorInfo> LoadPlugin(string assembly) {
