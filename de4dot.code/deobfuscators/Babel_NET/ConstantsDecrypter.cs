@@ -76,10 +76,10 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 		bool IsConstantDecrypter(TypeDef type) {
 			if (type.HasEvents)
 				return false;
-			if (type.NestedTypes.Count != 1)
+			if (type.NestedTypes.Count is not (1 or 2))
 				return false;
 
-			var nested = type.NestedTypes[0];
+			var nested = type.NestedTypes[type.NestedTypes.Count - 1];
 			if (!CheckNestedFields(nested))
 				return false;
 
@@ -99,20 +99,73 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			return true;
 		}
 
-		static string[] requiredTypes = new string[] {
+		static string[] _requiredTypes = new string[] {
 			"System.Int32[]",
 			"System.Int64[]",
 			"System.Single[]",
 			"System.Double[]",
 		};
-		bool CheckNestedFields(TypeDef nested) {
-			if (!new FieldTypes(nested).All(requiredTypes))
+
+		static bool CheckNestedFields(TypeDef nested) {
+			if (!new FieldTypes(nested).All(_requiredTypes))
 				return false;
 			foreach (var field in nested.Fields) {
 				if (new SigComparer().Equals(nested, field.FieldSig.GetFieldType()))
 					return true;
 			}
 			return false;
+		}
+
+		static int[] FindReaderXorConsts(TypeDef type, ISimpleDeobfuscator simpleDeobfuscator) {
+			var result = new int[] { 0, 0, 0, 0, 0, 0 };
+			foreach (var nested in type.NestedTypes) {
+				foreach (var method in nested.Methods) {
+					if (!DotNetUtils.CallsMethod(method, "System.Int32 System.IO.BinaryReader::ReadInt32()")) {
+						continue;
+					}
+
+					simpleDeobfuscator.Deobfuscate(method);
+					var blocks = new Blocks(method);
+					var cur = (Block)blocks.MethodBlocks.BaseBlocks![0];
+					int index = 0;
+					var visited = new List<Block>();
+					DfsExplore(cur, result, ref index, visited);
+					return result;
+				}
+			}
+			return result;
+		}
+
+		/// Depth-first-search that treats bge/bgt with bias for recovering xor values from reader method in order
+		static void DfsExplore(Block block, int[] consts, ref int index, List<Block> visited) {
+			if (visited.Contains(block)) {
+				return;
+			}
+			visited.Add(block);
+
+			var instrs = block.Instructions;
+			for (int i = 0; i < instrs.Count - 1; i++) {
+				if ((instrs[i].IsLdcI4() || instrs[i].OpCode == OpCodes.Ldc_I8)
+						&& instrs[i + 1].OpCode == OpCodes.Xor) {
+					if (index == consts.Length) {
+						Logger.e("Babel constant encryption has more xors than expected");
+						return;
+					}
+					consts[index++] = instrs[i].IsLdcI4() ? instrs[i].GetLdcI4Value() : (int)(long)instrs[i].Operand;
+				}
+			}
+
+			bool condHandled = false;
+			if (block.IsConditionalBranch() && block.LastInstr.OpCode.Code is Code.Bge or Code.Bge_S or Code.Bgt or Code.Bgt_S) {
+				condHandled = true;
+				DfsExplore(block.Targets![0], consts, ref index, visited);
+			}
+			if (block.FallThrough != null) {
+				DfsExplore(block.FallThrough, consts, ref index, visited);
+			}
+			if (!condHandled && block.IsConditionalBranch()) {
+				DfsExplore(block.Targets![0], consts, ref index, visited);
+			}
 		}
 
 		public void Initialize(ISimpleDeobfuscator simpleDeobfuscator, IDeobfuscator deob) {
@@ -127,24 +180,25 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 
 			var decrypted = resourceDecrypter.Decrypt(encryptedResource.CreateReader().ToArray());
 			var reader = new BinaryReader(new MemoryStream(decrypted));
+			int[] xorConsts = FindReaderXorConsts(decrypterType, simpleDeobfuscator);
 			int count;
 
-			count = reader.ReadInt32();
+			count = reader.ReadInt32() ^ xorConsts[0];
 			decryptedInts = new int[count];
 			while (count-- > 0)
-				decryptedInts[count] = reader.ReadInt32();
+				decryptedInts[count] = reader.ReadInt32() ^ xorConsts[1];
 
-			count = reader.ReadInt32();
+			count = reader.ReadInt32() ^ xorConsts[2];
 			decryptedLongs = new long[count];
 			while (count-- > 0)
-				decryptedLongs[count] = reader.ReadInt64();
+				decryptedLongs[count] = reader.ReadInt64() ^ xorConsts[3];
 
-			count = reader.ReadInt32();
+			count = reader.ReadInt32() ^ xorConsts[4];
 			decryptedFloats = new float[count];
 			while (count-- > 0)
 				decryptedFloats[count] = reader.ReadSingle();
 
-			count = reader.ReadInt32();
+			count = reader.ReadInt32() ^ xorConsts[5];
 			decryptedDoubles = new double[count];
 			while (count-- > 0)
 				decryptedDoubles[count] = reader.ReadDouble();
