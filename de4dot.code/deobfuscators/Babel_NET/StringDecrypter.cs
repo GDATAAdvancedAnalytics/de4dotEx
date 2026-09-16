@@ -324,19 +324,29 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			if (decrypterBuilderMethod == null)
 				return null;
 
-			var cctor = type.FindStaticConstructor();
-			if (cctor == null) return null;
-			resourceDecrypter.DecryptMethod = ResourceDecrypter.FindDecrypterMethod(cctor);
-
-			var decrypter = DotNetUtils.GetMethod(type, "System.String", "(System.Int32)");
-			if (decrypter is not { IsStatic: true })
+			if (BabelUtils.IsChainedObfuscation(decrypterBuilderMethod))
 				return null;
 
-			simpleDeobfuscator.Deobfuscate(decrypterBuilderMethod);
-			return new DecrypterInfoV3(resourceDecrypter) {
-				Decrypter = decrypter,
-				OffsetCalcInstructions = GetOffsetCalcInstructions(decrypterBuilderMethod),
-			};
+			var cctor = type.FindStaticConstructor();
+			if (cctor == null) return null;
+
+			try {
+				resourceDecrypter.DecryptMethod = ResourceDecrypter.FindDecrypterMethod(cctor);
+
+				var decrypter = DotNetUtils.GetMethod(type, "System.String", "(System.Int32)");
+				if (decrypter is not { IsStatic: true })
+					return null;
+
+				simpleDeobfuscator.Deobfuscate(decrypterBuilderMethod);
+				return new DecrypterInfoV3(resourceDecrypter) {
+					Decrypter = decrypter,
+					OffsetCalcInstructions = GetOffsetCalcInstructions(decrypterBuilderMethod),
+				};
+			}
+			catch (Exception ex) {
+				Logger.e("Babel error: " + ex.Message);
+				return null;
+			}
 		}
 
 		class ReflectionToDNLibMethodCreator {

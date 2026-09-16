@@ -82,6 +82,8 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			var nested = type.NestedTypes[type.NestedTypes.Count - 1];
 			if (!CheckNestedFields(nested))
 				return false;
+			if (BabelUtils.IsChainedObfuscation(nested.FindStaticConstructor()))
+				return false;
 
 			resourceDecrypter.DecryptMethod = ResourceDecrypter.FindDecrypterMethod(nested.FindMethod(".ctor"));
 

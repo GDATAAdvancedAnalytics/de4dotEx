@@ -23,6 +23,7 @@ using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using de4dot.blocks;
 using System;
+using System.Linq;
 
 namespace de4dot.code.deobfuscators.Babel_NET {
 	static class BabelUtils {
@@ -148,6 +149,15 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			regMethod = null;
 			handler = null;
 			return false;
+		}
+
+		/// Checks for signs that Babel was applied twice in a row.
+		public static bool IsChainedObfuscation(MethodDef method) {
+			if (method == null)
+				return false;
+			var calls = DotNetUtils.GetMethodCalls(method);
+			return calls.Count(m =>
+				m.IsMethodDef && m.GetParamCount() == 1 && m.MethodSig.RetType.FullName == "System.Int32") > 2;
 		}
 	}
 }
