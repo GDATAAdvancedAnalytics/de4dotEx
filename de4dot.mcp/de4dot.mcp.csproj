@@ -4,8 +4,8 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- Force it to build for .NET 8.0 since MCP/Minimal APIs require .NET 8 capabilities -->
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <!-- Force it to build for .NET 8.0+ since MCP/Minimal APIs require .NET 8 capabilities -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

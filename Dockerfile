@@ -26,23 +26,23 @@ RUN mkdir -p /app && \
     if [ -n "$SO_FILE" ]; then cp "$SO_FILE" /app/libBeaEngine.so; else echo "Error: libBeaEngine.so not found!" && exit 1; fi
 
 # ==============================================================================
-# STAGE 2: Build de4dotEx (.NET 8.0 Cross-Platform Release)
+# STAGE 2: Build de4dotEx (.NET 10.0 Cross-Platform Release)
 # ==============================================================================
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dotnet-builder
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dotnet-builder
 WORKDIR /src
 
 # Copy all files to build
 COPY . .
 
-# Publish both de4dot and the de4dot.mcp server targeting net8.0
-RUN dotnet publish -c Release -f net8.0 -o /app/publish/de4dot de4dot/de4dot.csproj
-RUN dotnet publish -c Release -f net8.0 -o /app/publish/mcp de4dot.mcp/de4dot.mcp.csproj
+# Publish both de4dot and the de4dot.mcp server targeting net10.0
+RUN dotnet publish -c Release -f net10.0 -o /app/publish/de4dot de4dot/de4dot.csproj
+RUN dotnet publish -c Release -f net10.0 -o /app/publish/mcp de4dot.mcp/de4dot.mcp.csproj
 RUN rm -rf /app/publish/**/*.pdb /app/publish/**/*.xml
 
 # ==============================================================================
-# STAGE 3: Final Runtime Image (.NET 8.0 on Ubuntu / Runtime)
+# STAGE 3: Final Runtime Image (.NET 10.0 on Ubuntu / Runtime)
 # ==============================================================================
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
 WORKDIR /app
 
 # Install native dependencies required for execution (e.g. globalization, bash)
