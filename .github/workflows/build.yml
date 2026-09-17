@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 env:
-  DOTNET_RUNTIME: net8.0
-  SETUP_DOTNET_VERSION: 8.0.x
+  DOTNET_RUNTIME: net10.0
+  SETUP_DOTNET_VERSION: 10.0.x
 
   BEAENGINE_TAG: v5.3.0
 

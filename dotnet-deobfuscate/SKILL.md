@@ -77,7 +77,7 @@ Command for registering inside your MCP client config (`claude_desktop_config.js
 "mcpServers": {
   "de4dotex": {
     "command": "dotnet",
-    "args": ["/absolute/path/to/publish-net8.0-mcp/de4dot.mcp.dll"]
+    "args": ["/absolute/path/to/publish-net10.0-mcp/de4dot.mcp.dll"]
   }
 }
 ```
