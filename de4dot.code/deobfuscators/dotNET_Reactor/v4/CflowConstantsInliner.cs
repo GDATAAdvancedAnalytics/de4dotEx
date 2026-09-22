@@ -82,9 +82,17 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 						if (load.Operand is not FieldDef loadField)
 							continue;
 						if (dictionary.TryGetValue(loadField, out var value)) {
-							instrs[i] = Instruction.CreateLdcI4(value);
-							if (nopNext)
-								instrs[i + 1] = Instruction.Create(OpCodes.Nop);
+							// Mutate in place instead of replacing the instruction objects: the original
+							// ldsfld/ldfld may be an exception-handler boundary or branch target, and
+							// swapping in a new Instruction would leave those references dangling (which
+							// later crashes InstructionListParser when it rebuilds the method's blocks).
+							var ldc = Instruction.CreateLdcI4(value);
+							instrs[i].OpCode = ldc.OpCode;
+							instrs[i].Operand = ldc.Operand;
+							if (nopNext) {
+								instrs[i + 1].OpCode = OpCodes.Nop;
+								instrs[i + 1].Operand = null;
+							}
 						}
 					}
 				}
