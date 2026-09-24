@@ -247,6 +247,9 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				// Check for string,int variant with 3 nested fields and key length 16.
 				// When .NET Reactor was applied on top, field count is +1 due to an extraneous object field.
 				if (CheckFields(nested, "System.Byte[]", nested)) {
+					if (BabelUtils.IsChainedObfuscation(nested.FindMethod(".ctor")))
+						return null;
+
 					var nestedDecrypter16 = DotNetUtils.GetMethod(nested, "System.String", "(System.String,System.Int32)");
 					if (nestedDecrypter16 is { IsStatic: false }) {
 						var decrypter16 = DotNetUtils.GetMethod(type, "System.String", "(System.String,System.Int32)");
