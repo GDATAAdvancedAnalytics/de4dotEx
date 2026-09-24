@@ -116,8 +116,10 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			if (!GetNewValue(methodToInline, ldci4.GetLdcI4Value(), out int newValue))
 				return false;
 
-			block.Instructions[instrIndex - 1] = new Instr(OpCodes.Nop.ToInstruction());
-			block.Instructions[instrIndex] = new Instr(Instruction.CreateLdcI4(newValue));
+			block.Instructions[instrIndex - 1].Instruction.OpCode = OpCodes.Nop;
+			var newLdc = Instruction.CreateLdcI4(newValue);
+			block.Instructions[instrIndex].Instruction.OpCode = newLdc.OpCode;
+			block.Instructions[instrIndex].Instruction.Operand = newLdc.Operand;
 			return true;
 		}
 
@@ -171,6 +173,10 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				case Code.Sub:
 				case Code.Xor:
 				case Code.Or:
+				case Code.Shl:
+				case Code.Shr:
+				case Code.Neg:
+				case Code.Not:
 				case Code.Nop:
 				case Code.Dup:
 				case Code.Mul:
