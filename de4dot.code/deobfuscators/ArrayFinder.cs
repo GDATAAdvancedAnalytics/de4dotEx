@@ -68,10 +68,14 @@ namespace de4dot.code.deobfuscators {
 		}
 
 		public static byte[] GetInitializedByteArray(MethodDef method, int arraySize) {
-			int newarrIndex = FindNewarr(method, arraySize);
-			if (newarrIndex < 0)
-				return null;
-			return GetInitializedByteArray(arraySize, method, ref newarrIndex);
+			for (int newarrIndex = 0; FindNewarr(method, ref newarrIndex, out int size); newarrIndex++) {
+				if (size != arraySize)
+					continue;
+				var initializedArray = GetInitializedByteArray(arraySize, method, ref newarrIndex);
+				if (initializedArray != null)
+					return initializedArray;
+			}
+			return null;
 		}
 
 		public static byte[] GetInitializedByteArray(int arraySize, MethodDef method, ref int newarrIndex) {
