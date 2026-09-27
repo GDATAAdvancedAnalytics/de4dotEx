@@ -151,34 +151,63 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 		public EmbeddedResource MergeResources() {
 			if (encryptedResource.Resource == null)
 				return null;
-			DeobUtils.DecryptAndAddResources(module, encryptedResource.Resource.Name.String, () => {
-				byte[] decrypted;
-				try {
-					decrypted = encryptedResource.Decrypt();
-				}
-				catch (Exception ex) {
-					Logger.e("Resource decryption failed:\n{0}", ex);
-					return null;
-				}
-
-				if (decrypted.Length < 64)
-					throw new Exception("Decrypted resource data has length " + decrypted.Length);
-				if (decrypted[0] == 0x4D && decrypted[1] == 0x5A && decrypted[62] == 0 && decrypted[63] == 0)
-					return decrypted;
-
-				try {
-					return QuickLZ.Decompress(decrypted);
-				}
-				catch {
-					try {
-						return DeobUtils.Inflate(decrypted, true);
-					}
-					catch {
-						return null;
-					}
-				}
-			});
+			byte[] decrypted;
+			try {
+				decrypted = encryptedResource.Decrypt();
+			}
+			catch (Exception ex) {
+				Logger.e("Resource decryption failed:\n{0}", ex);
+				return null;
+			}
+			DeobUtils.DecryptAndAddResources(module, encryptedResource.Resource.Name.String,
+				() => GetDecompressedResources(decrypted));
 			return encryptedResource.Resource;
+		}
+
+		static IEnumerable<byte[]> GetDecompressedResources(byte[] decrypted) {
+			if (decrypted.Length >= 2 && decrypted[0] == 0x4D && decrypted[1] == 0x5A)
+				yield return decrypted;
+
+			if (TryQuickLZDecompress(decrypted, out var decompressed))
+				yield return decompressed;
+			if (TryInflate(decrypted, out var inflated))
+				yield return inflated;
+
+			if (TryBrotliDecompress(decrypted, out var brotli))
+				yield return brotli;
+		}
+
+		static bool TryQuickLZDecompress(byte[] data, out byte[] decompressed) {
+			try {
+				decompressed = QuickLZ.Decompress(data);
+				return true;
+			}
+			catch {
+				decompressed = null;
+				return false;
+			}
+		}
+
+		static bool TryInflate(byte[] data, out byte[] inflated) {
+			try {
+				inflated = DeobUtils.Inflate(data, true);
+				return true;
+			}
+			catch {
+				inflated = null;
+				return false;
+			}
+		}
+
+		static bool TryBrotliDecompress(byte[] data, out byte[] brotli) {
+			try {
+				brotli = DeobUtils.BrotliDecompress(data);
+				return true;
+			}
+			catch {
+				brotli = null;
+				return false;
+			}
 		}
 	}
 }

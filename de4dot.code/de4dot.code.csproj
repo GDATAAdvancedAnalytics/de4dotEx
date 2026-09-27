@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="8.0.8" Condition=" '$(De4DotNetFramework)' != 'true' " />
+    <PackageReference Include="BrotliSharpLib" Version="0.3.3" Condition=" '$(De4DotNetFramework)' == 'true' " />
   </ItemGroup>
 
 </Project>
