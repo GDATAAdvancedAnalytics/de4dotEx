@@ -573,7 +573,7 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			if (options.DecryptResources) {
 				resourceResolver.Initialize(DeobfuscatedFile, this);
 				DecryptResources();
-				if (options.InlineMethods) {
+				if (options.InlineMethods && !resourceResolver.HasExternalMethodReferences) {
 					AddTypeToBeRemoved(resourceResolver.Type, "Resource decrypter type");
 					removeResourceResolver = true;
 				}

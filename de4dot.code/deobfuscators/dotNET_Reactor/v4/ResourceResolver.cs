@@ -148,6 +148,28 @@ namespace de4dot.code.deobfuscators.dotNET_Reactor.v4 {
 			return null;
 		}
 
+		public bool HasExternalMethodReferences {
+			get {
+				if (Type == null)
+					return false;
+
+				foreach (var type in module.GetTypes()) {
+					if (type == Type)
+						continue;
+					foreach (var method in type.Methods) {
+						if (!method.HasBody)
+							continue;
+						foreach (var calledMethod in DotNetUtils.GetCalledMethods(module, method)) {
+							if (calledMethod.DeclaringType == Type && calledMethod != initMethod)
+								return true;
+						}
+					}
+				}
+
+				return false;
+			}
+		}
+
 		public EmbeddedResource MergeResources() {
 			if (encryptedResource.Resource == null)
 				return null;
