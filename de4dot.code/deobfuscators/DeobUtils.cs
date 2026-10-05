@@ -25,13 +25,36 @@ using System.Security.Cryptography;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using ICSharpCode.SharpZipLib.Zip.Compression;
+#if NETFRAMEWORK
+using BrotliSharpLib;
+#endif
 using de4dot.blocks;
 
 namespace de4dot.code.deobfuscators {
 	public static class DeobUtils {
 		public static void DecryptAndAddResources(ModuleDef module, string encryptedName, Func<byte[]> decryptResource) {
 			Logger.v("Decrypting resources, name: {0}", Utils.ToCsharpString(encryptedName));
-			var decryptedResourceData = decryptResource();
+			AddDecryptedResources(module, decryptResource());
+		}
+
+		public static void DecryptAndAddResources(ModuleDef module, string encryptedName, Func<IEnumerable<byte[]>> decryptResources) {
+			Logger.v("Decrypting resources, name: {0}", Utils.ToCsharpString(encryptedName));
+			BadImageFormatException lastException = null;
+			foreach (var decryptedResourceData in decryptResources()) {
+				try {
+					AddDecryptedResources(module, decryptedResourceData);
+					return;
+				}
+				catch (BadImageFormatException ex) {
+					lastException = ex;
+				}
+			}
+			if (lastException != null)
+				throw lastException;
+			throw new BadImageFormatException();
+		}
+
+		static void AddDecryptedResources(ModuleDef module, byte[] decryptedResourceData) {
 			if (decryptedResourceData == null)
 				throw new ApplicationException("decryptedResourceData is null");
 			var resourceModule = ModuleDefMD.Load(decryptedResourceData);
@@ -161,6 +184,21 @@ namespace de4dot.code.deobfuscators {
 				memStream.Write(buffer, 0, count);
 			}
 			return memStream.ToArray();
+		}
+
+		public static byte[] BrotliDecompress(byte[] data) {
+#if NETFRAMEWORK
+			return Brotli.DecompressBuffer(data, 0, data.Length);
+#else
+			using (var input = new MemoryStream(data, writable: false)) {
+				using (var brotli = new BrotliStream(input, CompressionMode.Decompress)) {
+					using (var output = new MemoryStream()) {
+						brotli.CopyTo(output);
+						return output.ToArray();
+					}
+				}
+			}
+#endif
 		}
 
 		public static byte[] Gunzip(Stream input, int decompressedSize) {
