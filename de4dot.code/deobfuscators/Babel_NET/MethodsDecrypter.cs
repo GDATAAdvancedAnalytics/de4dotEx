@@ -45,8 +45,7 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 
 		public void Find() {
 			var requiredFields = new string[] {
-				"System.Threading.ReaderWriterLock",
-				"System.Collections.Hashtable",
+				"System.Threading.ReaderWriterLock"
 			};
 			foreach (var type in module.GetTypes()) {
 				var fieldTypes = new FieldTypes(type);
