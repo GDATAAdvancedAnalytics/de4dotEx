@@ -199,28 +199,29 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 			}
 		}
 
-		// v10/v11
+		// v10/v11 - Fix (babel): correct AES key buffer initialization in Decrypter4
 		class Decrypter4 : IDecrypter {
 			ModuleDefMD module;
 			Inflater inflater;
-
+		
 			public Decrypter4(ModuleDefMD module, MethodDef decryptMethod, ISimpleDeobfuscator deobfuscator) {
 				this.module = module;
 				inflater = InflaterCreator.Create(decryptMethod, deobfuscator, true);
 			}
-
+		
 			public byte[] Decrypt(byte[] encryptedData) {
 				int index = 0;
 				ParseHeader(GetHeaderData(encryptedData, ref index, out var iv),
 					out var key,
 					out var flag,
 					out var cipherType);
+		
 				bool isEncrypted = (flag & 2) != 0;
 				bool isCompressed = (flag & 1) != 0;
-
+		
 				byte[] data = new byte[encryptedData.Length - index];
 				Array.Copy(encryptedData, index, data, 0, encryptedData.Length - index);
-
+		
 				if (isEncrypted) {
 					if (cipherType == 1)
 						data = DeobUtils.DesDecrypt(data, 0, data.Length, key, iv);
@@ -231,44 +232,50 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 					else
 						throw new Exception($"Unsupported cipher type {cipherType}");
 				}
-
+		
 				if (isCompressed) {
 					data = DeobUtils.Inflate(data, inflater);
 				}
-
+		
 				return data;
 			}
-
-			byte[] GetHeaderData(byte[] encryptedData, ref int index, out byte[] iv) {
-				var headerData = new byte[BitConverter.ToUInt16(encryptedData, index)];
+		
+			byte[] GetHeaderData(byte[] encryptedData, ref int index, out byte[] iv) {				
+				var headerLength = BitConverter.ToUInt16(encryptedData, index);
+				var headerData = new byte[headerLength];
 				Array.Copy(encryptedData, index + 2, headerData, 0, headerData.Length);
 				index += headerData.Length + 2;
-
+		
 				iv = new byte[encryptedData[index++]];
 				Array.Copy(encryptedData, index, iv, 0, iv.Length);
 				index += iv.Length;
+		
 				for (int i = 0; i < headerData.Length; i++)
 					headerData[i] ^= iv[i % iv.Length];
-
+		
 				return headerData;
 			}
-
+		
 			void ParseHeader(byte[] headerData, out byte[] key, out byte flag, out byte cipherType) {
 				var reader = new BinaryReader(new MemoryStream(headerData));
-
-				/*var license =*/ reader.ReadString();
+		
+				/*var license =*/
+				reader.ReadString();
 				flag = reader.ReadByte();
 				cipherType = reader.ReadByte();
 				byte pubKeyOffset = reader.ReadByte();
-
-				key = reader.ReadBytes(reader.ReadByte());
+				byte keyLength = reader.ReadByte();
+				key = new byte[keyLength];
+		
 				if (pubKeyOffset < 64) {
+					reader.Read(key, 0, keyLength);
 					if (reader.BaseStream.Position < reader.BaseStream.Length)
 						throw new Exception("Expected end of header");
 				}
 				else {
-					Array.Copy(module.Assembly.PublicKey.Data, pubKeyOffset + 12, key, 0, key.Length);
-					//key[5] |= 0x80;
+					if (module.Assembly != null && module.Assembly.PublicKey != null && module.Assembly.PublicKey.Data != null) {
+						Array.Copy(module.Assembly.PublicKey.Data, pubKeyOffset + 12, key, 0, keyLength);
+					}
 				}
 			}
 		}
