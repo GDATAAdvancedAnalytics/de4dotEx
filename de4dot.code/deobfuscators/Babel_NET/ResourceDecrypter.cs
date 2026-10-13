@@ -215,6 +215,7 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 					out var key,
 					out var flag,
 					out var cipherType);
+
 				bool isEncrypted = (flag & 2) != 0;
 				bool isCompressed = (flag & 1) != 0;
 
@@ -239,14 +240,16 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				return data;
 			}
 
-			byte[] GetHeaderData(byte[] encryptedData, ref int index, out byte[] iv) {
-				var headerData = new byte[BitConverter.ToUInt16(encryptedData, index)];
+			byte[] GetHeaderData(byte[] encryptedData, ref int index, out byte[] iv) {				
+				var headerLength = BitConverter.ToUInt16(encryptedData, index);
+				var headerData = new byte[headerLength];
 				Array.Copy(encryptedData, index + 2, headerData, 0, headerData.Length);
 				index += headerData.Length + 2;
 
 				iv = new byte[encryptedData[index++]];
 				Array.Copy(encryptedData, index, iv, 0, iv.Length);
 				index += iv.Length;
+
 				for (int i = 0; i < headerData.Length; i++)
 					headerData[i] ^= iv[i % iv.Length];
 
@@ -260,15 +263,18 @@ namespace de4dot.code.deobfuscators.Babel_NET {
 				flag = reader.ReadByte();
 				cipherType = reader.ReadByte();
 				byte pubKeyOffset = reader.ReadByte();
+				byte keyLength = reader.ReadByte();
+				key = new byte[keyLength];
 
-				key = reader.ReadBytes(reader.ReadByte());
 				if (pubKeyOffset < 64) {
+					reader.Read(key, 0, keyLength);
 					if (reader.BaseStream.Position < reader.BaseStream.Length)
 						throw new Exception("Expected end of header");
 				}
 				else {
-					Array.Copy(module.Assembly.PublicKey.Data, pubKeyOffset + 12, key, 0, key.Length);
-					//key[5] |= 0x80;
+					if (module.Assembly != null && module.Assembly.PublicKey != null && module.Assembly.PublicKey.Data != null) {
+						Array.Copy(module.Assembly.PublicKey.Data, pubKeyOffset + 12, key, 0, keyLength);
+					}
 				}
 			}
 		}
